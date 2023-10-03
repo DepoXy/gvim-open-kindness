@@ -78,7 +78,9 @@ gvim_open_kindness () {
 
   must_locate_gvim_or_notify_and_exit
 
-  servername="$(gvim_ensure_servername_or_use_default "${servername}")"
+  gvim_pid=$(pidof gvim)
+
+  servername="$(gvim_ensure_servername_or_use_default "${servername}" "${gvim_pid}")"
 
   # Fallback on a named file if the user doesn't specify a file to open,
   # because a bare command, e.g., gvim --servername ${servername}, opens
@@ -215,6 +217,11 @@ desktop_notify () {
 
 gvim_ensure_servername_or_use_default () {
   local servername="$1"
+  local gvim_pid="$2"
+
+  if [ -z "${servername}" ] && [ -n "${gvim_pid}" ]; then
+    servername="$(gvim_servername_active "${gvim_pid}")"
+  fi
 
   # Prefer using the same servername so that the same gVim instance is
   # always targeted when this command is called. The name does not matter, but it should be unique
@@ -224,6 +231,30 @@ gvim_ensure_servername_or_use_default () {
   fi
 
   echo "${servername}"
+}
+
+# ***
+
+# Get arguments for currently running GVim process, and look
+# for the servername.
+# - There are a few ways to read the process args given a process ID:
+#     ps -fp <pid>
+#     cat /proc/<pid>/cmdline | sed -e "s/\x00/ /g"; echo  # Less universal
+gvim_servername_active () {
+  local gvim_pid="$1"
+
+  local print_arg=false
+
+  for word in $(ps -fp ${gvim_pid} | tail -1); do
+    if ${print_arg}; then
+      echo "${word}"
+
+      print_arg=false
+    fi
+    if [ "${word}" = '--servername' ]; then
+      print_arg=true
+    fi
+  done
 }
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
