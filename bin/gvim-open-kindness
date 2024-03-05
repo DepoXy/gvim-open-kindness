@@ -101,6 +101,9 @@ gvim_open_kindness () {
   gvim_move_cursor_to_line_and_column "${servername}" "${row_number}" "${col_number}"
 
   gvim_bring_window_to_front "${servername}"
+
+  # Position and size window, but only if we started the gVim/MacVim process.
+  [ -n "${gvim_pid}" ] || gvim_position_and_size_window
 }
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
@@ -347,6 +350,25 @@ gvim_bring_window_to_front () {
   #     XGetWindowProperty[_NET_WM_DESKTOP] failed (code=1)
   #   but it works nonetheless, so chuck the error.
   xdotool search --name "${servername}" windowactivate > /dev/null 2>&1
+}
+
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+
+# Run in terminal, then switch to GVim:
+#   sleep 1 && xdotool getactivewindow getwindowgeometry --shell
+# Similarly, to test:
+#   sleep 1 && wmctrl -r :ACTIVE: -e 1,430,126,1859,1220
+# Then set your own environ if you want to override gVim's default
+# position, e.g.,:
+#   export GVIM_OPEN_GEOMETRY=1,414,66,1859,1220
+
+# CXREF: See fullscreener, which will mostly-fullscreen gVim on startup.
+#   https://github.com/landonb/vim-fullscreen-toggle#💯
+
+gvim_position_and_size_window () {
+  if [ -n "${GVIM_OPEN_GEOMETRY}" ]; then
+    wmctrl -r :ACTIVE: -e ${GVIM_OPEN_GEOMETRY}
+  fi
 }
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
