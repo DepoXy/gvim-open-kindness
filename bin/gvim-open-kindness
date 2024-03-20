@@ -210,7 +210,7 @@ desktop_notify () {
   else
     local tempfile
 
-    tempfile="$(mktemp /tmp/$(basename $0).XXXXXX)" || exit 1
+    tempfile="$(mktemp /tmp/$(basename -- "$0").XXXXXX)" || exit 1
 
     echo "$@" >> "${tempfile}"
   fi
