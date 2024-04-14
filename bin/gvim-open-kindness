@@ -79,7 +79,11 @@ gvim_open_kindness () {
   must_locate_gvim_or_notify_and_exit
 
   local gvim_pid=""
-  gvim_pid=$(pidof gvim)
+  if command -v pidof > /dev/null; then
+    gvim_pid=$(pidof gvim)
+  # else, not `apt install sysvinit-utils` or not `brew install pidof`,
+  # though sussing --servername from `ps` args not supported on @macOS.
+  fi
 
   servername="$(gvim_ensure_servername_or_use_default "${servername}" "${gvim_pid}")"
 
@@ -244,6 +248,8 @@ gvim_ensure_servername_or_use_default () {
 # - There are a few ways to read the process args given a process ID:
 #     ps -fp <pid>
 #     cat /proc/<pid>/cmdline | sed -e "s/\x00/ /g"; echo  # Less universal
+# - SAVVY: This doesn't work on @macOS, where /opt/homebrew/bin/gvim shims
+#   to /Applications/MacVim.app/, and the --servername is not an argument.
 gvim_servername_active () {
   local gvim_pid="$1"
 
