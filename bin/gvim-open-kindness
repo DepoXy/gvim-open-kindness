@@ -78,6 +78,7 @@ gvim_open_kindness () {
 
   must_locate_gvim_or_notify_and_exit
 
+  local gvim_pid=""
   gvim_pid=$(pidof gvim)
 
   servername="$(gvim_ensure_servername_or_use_default "${servername}" "${gvim_pid}")"
