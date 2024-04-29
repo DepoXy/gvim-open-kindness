@@ -133,9 +133,15 @@ gvim_open_kindness () {
 must_locate_gvim_or_notify_and_exit () {
   PATH="/usr/local/bin:${PATH}"
 
-  # Support Karabiner-Elements with MacVim at brew-installed location.
-  if [ -n "${HOMEBREW_PREFIX}" ]; then
-    PATH="${HOMEBREW_PREFIX}/bin:${PATH}"
+  # Aka ${HOMEBREW_PREFIX}
+  local brew_home="/opt/homebrew"
+  # Otherwise on Intel Macs it's under /usr/local.
+  [ -d "${brew_home}" ] || brew_home="/usr/local"
+  #
+  if [ -d "${brew_home}" ]; then
+    # Support Karabiner-Elements with MacVim at brew-installed location;
+    # also to find `terminal-notifier`.
+    PATH="${brew_home}/bin:${PATH}"
   fi
 
   # Support Linux users with custom build at conventional location.
