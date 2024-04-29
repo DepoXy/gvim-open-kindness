@@ -213,8 +213,9 @@ desktop_notify () {
   elif [ -x '/usr/local/bin/terminal-notifier' ]; then
     /usr/local/bin/terminal-notifier -message "$@"
   else
-    local tempfile
+    # Undesirable branch.
 
+    local tempfile
     tempfile="$(mktemp /tmp/$(basename -- "$0").XXXXXX)" || exit 1
 
     echo "$@" >> "${tempfile}"
