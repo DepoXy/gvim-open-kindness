@@ -214,10 +214,12 @@ stderr_or_desktop_notify () {
 }
 
 desktop_notify () {
-  if type notify-send > /dev/null 2>&1; then
+  if command -v notify-send > /dev/null; then
     notify-send "$@"
-  elif [ -x '/usr/local/bin/terminal-notifier' ]; then
-    /usr/local/bin/terminal-notifier -message "$@"
+  elif command -v terminal-notifier > /dev/null; then
+    # E.g., /opt/homebrew/bin/terminal-notifier
+    #  Or /usr/local/bin/terminal-notifier
+    terminal-notifier -message "$@"
   else
     # Undesirable branch.
 
