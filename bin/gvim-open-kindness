@@ -148,7 +148,7 @@ must_locate_gvim_or_notify_and_exit () {
   PATH="${HOME}/.local/bin:${PATH}"
 
   if ! type gvim > /dev/null 2>&1; then
-    stderr_or_desktop_notify "Where's gvim?"
+    stderr_or_desktop_notify "gvim-open-kindness" "Where's gvim?"
 
     exit 1
   fi
@@ -207,26 +207,34 @@ stderr_or_desktop_notify () {
   stdout_isatty () { [ -t 1 ]; }
 
   if stdout_isatty; then
-    >&2 echo "$@"
+    >&2 echo "ERROR: $@"
   else
     desktop_notify "$@"
   fi
 }
 
 desktop_notify () {
+  local summary="$1"
+  local body="$2"
+
   if command -v notify-send > /dev/null; then
-    notify-send "$@"
+    # Linux
+    notify-send "${summary}" "${body}"
   elif command -v terminal-notifier > /dev/null; then
-    # E.g., /opt/homebrew/bin/terminal-notifier
+    # macOS — e.g., /opt/homebrew/bin/terminal-notifier
     #  Or /usr/local/bin/terminal-notifier
-    terminal-notifier -message "$@"
+    # - Without -title, prints "Terminal".
+    #   With -title "", prints "terminal-notifier".
+    #   Note -subtitle is second line, bolded, and -message
+    #   is third line, not bolded; only -message is required.
+    terminal-notifier -message "${body}" -title "${summary}"
   else
     # Undesirable branch.
 
     local tempfile
     tempfile="$(mktemp /tmp/$(basename -- "$0").XXXXXX)" || exit 1
 
-    echo "$@" >> "${tempfile}"
+    echo "ERROR: ${summary}: ${body}" >> "${tempfile}"
   fi
 }
 
