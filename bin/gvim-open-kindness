@@ -315,11 +315,23 @@ gvim_relocate_cursor_to_editing_window () {
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
+# Send gvim outputs to null, aka the bit bucket, black hole, null route,
+# punch (card) bucket, or possibly most technically the null device.
+#
+# DUNNO/2024-10-18: On macOS, you might otherwise see spew going to
+# whatever terminal opened gvim, e.g.:
+#
+#   Vim(55510) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+#   Vim(55514) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+#   Vim(55518) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+#   ...
+
 gvim_open_files () {
   local servername="$1"
   shift
 
-  gvim --servername "${servername}" --remote-silent "$@"
+  gvim --servername "${servername}" --remote-silent "$@" \
+    2>/dev/null
 }
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
