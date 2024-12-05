@@ -43,7 +43,7 @@ gvim-open-kindness — Kindly file opener that positions your cursor 🐬
   Many users will be able to symlink `gvim-open-kindness` from
   user-local-bin to call it without using its full path, e.g.,:
 
-    /bin/ln -sfn \
+    ln -sfn \
       "/full/path/to/gvim-open-kindness/bin/gvim-open-kindness" \
       "${HOME}/.local/bin/gvim-open-kindness"
 
