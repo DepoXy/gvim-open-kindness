@@ -47,7 +47,7 @@ gvim-open-kindness — Kindly file opener that positions your cursor 🐬
       "/full/path/to/gvim-open-kindness/bin/gvim-open-kindness" \
       "${HOME}/.local/bin/gvim-open-kindness"
 
-## OPTIONAL
+## OPTIONAL NOTIFICATION
 
   If you'd like a popup notification if there's an error:
 
@@ -64,6 +64,24 @@ gvim-open-kindness — Kindly file opener that positions your cursor 🐬
   - This is so you can wire `gvim-open-kindness` from an OS-level
     keybinding (e.g., using Karabiner-Elements) and still be able
     to diagnose errors.
+
+## OPTIONAL DEPENDENCY
+
+This plugin uses a command from `embrace-vim/vim-buffer-delights`
+to avoid opening files in a special buffer:
+
+https://github.com/embrace-vim/vim-buffer-delights 🍧
+
+If that plugin is not installed, `gvim-open-kindness` will still
+work, but the file will be opened in whatever window has focus,
+which might contain a special buffer (e.g., the *QuickFix* window,
+or a help window). Such windows might have peculiar dimensions or
+otherwise not be desirable for editing within.
+
+The `vim-buffer-delights` plugin will wire a number of window and
+buffer command maps, which you can disable with a global variable:
+
+    let g:vim_buffer_delights_disable = 1
 
 ## USE CASES
 
