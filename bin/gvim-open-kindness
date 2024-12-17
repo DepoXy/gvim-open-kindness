@@ -311,9 +311,9 @@ gvim_servername_active () {
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
-# FIXME/2021-02-21: The SensibleOpenMoveCursorAvoidSpecial plugin
-# is not currently published... I'll get it there eventually....
-# Not to worry, gvim-open-kindness will run fine without it.
+# REFER/2024-12-15: Calls (optional) FocusCursorInNormalBufferWindow in
+#   https://github.com/embrace-vim/vim-buffer-delights#🍧
+# ~/.vim/pack/embrace-vim/start/vim-buffer-delights/autoload/embrace/windows.vim
 
 # Adjust the Vim cursor before opening the file, if necessary, so
 # the new buffer does not replace the quickfix buffer, an open help
@@ -327,15 +327,16 @@ gvim_servername_active () {
 #
 # Also, --remote-send fails if the server is not started, e.g.,
 #   E247: no registered server named "SAMPI": Send failed.
-# or if the command is not available (plugin not installed).
-# In either case, this function absorbs the error and returns happy.
+# so toss the stderr stream.
+#
+# Finally, use `silent!` to ignore error if autoload/ fcn. absent. 
 
 gvim_relocate_cursor_to_editing_window () {
   local servername="$1"
 
   gvim \
     --servername "${servername}" \
-    --remote-send "<ESC>:if exists('*SensibleOpenMoveCursorAvoidSpecial') | call SensibleOpenMoveCursorAvoidSpecial() | endif<CR>" \
+    --remote-send "<ESC>:silent! call g:embrace#windows#FocusCursorInNormalBufferWindow()<CR>" \
     > /dev/null 2>&1
 }
 
