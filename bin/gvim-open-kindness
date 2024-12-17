@@ -322,7 +322,8 @@ gvim_servername_active () {
 # Note that `man gvim` says --cmd is 'executed just before processing
 # any vimrc', but that doesn't mean it runs before the file is loaded.
 # Or even after, as far as I could tell (doesn't seem to run at all).
-# So sending keystrokes to invoke command via --remote-send.
+#
+# - So sending keystrokes to invoke command via --remote-send.
 #
 # Also, --remote-send fails if the server is not started, e.g.,
 #   E247: no registered server named "SAMPI": Send failed.
