@@ -198,11 +198,7 @@ gvim_open_kindness () {
 
   gvim_relocate_cursor_to_editing_window "${server_arg}"
 
-  gvim_open_files "${server_arg}" "${socket_path}" "$@"
-
-  gvim_sleep_briefly_macvim_needs_a_moment
-
-  gvim_move_cursor_to_line_and_column "${server_arg}" "${row_number}" "${col_number}"
+  gvim_open_files "${server_arg}" "${socket_path}" "${row_number}" "${col_number}" "$@"
 
   gvim_bring_window_to_front "${server_id}"
 }
@@ -475,21 +471,38 @@ gvim_relocate_cursor_to_editing_window () {
 gvim_open_files () {
   local server_arg="$1"
   local socket_path="$2"
-  shift 2
+  local row_number="$3"
+  local col_number="${4:-0}"
+  shift 4
 
   # DUNNO: Relative paths don't work with nvim, apparently:
   #   cd ~/path/to/gvim-open-kindness
   #   nvim --server /tmp/neovide.socket --remote-silent bin/nvim-open-kindness
   # Opens the file: ~/bin/nvim-open-kindness
 
+  local cursor_cmd=""
+  if [ -n "${row_number}" ] && [ -n "${col_number}" ]; then
+    cursor_cmd="-c \"call cursor(${row_number}, ${col_number})\""
+  fi
+
   if ! ${is_server_running} && ! is_editor_gvim; then
     # Run user's preferred GUI, e.g., Neovide
-    ${NVIM_OPEN_APPNAME:-neovide} -- --listen ${socket_path} "$@" & \
-      2>/dev/null
+    if [ "${NVIM_OPEN_APPNAME}" = "neovide" ]; then
+      eval "neovide -- --listen ${socket_path} ${cursor_cmd} $@ & 2>/dev/null"
+    elif [ "${NVIM_OPEN_APPNAME}" = "nvim" ]; then
+      eval "nvim --listen ${socket_path} ${cursor_cmd} $@"
+      # Run until user quits nvim.
+
+      exit_0
+    fi
+    # else, Unreachable path
   else
     # gvim or nvim
-    eval "$(gvim_procname) ${server_arg} \
-      --remote-silent $(expand_paths "$@") \
+    eval "$(gvim_procname) \
+      ${server_arg} \
+      ${cursor_cmd} \
+      --remote-silent \
+      $(expand_paths "$@") \
       2>/dev/null"
   fi
 }
@@ -502,41 +515,6 @@ expand_paths () {
     | xargs -0 realpath \
     | $(command -v gsed || command -v sed) 's/^\(.*\)$/"\1"/' \
     | tr "\n" " "
-}
-
-# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
-
-# On macOS, sleep briefly after loading the file. Otherwise, if the file
-# was not already loaded, the next command, which calls `:call cursor()`
-# (gvim_move_cursor_to_line_and_column), would be ignored, at least IME.
-#
-# (I tried sleep 0.33 for a bit and had limited success; and 0.5 worked
-#  for a while, until it didn't; so latest attempt is to wait 2/3 of a
-#  second for file load to settle in gVim, then try jumping cursor.)
-
-gvim_sleep_briefly_macvim_needs_a_moment () {
-  if ! os_is_macos || ! is_editor_gvim; then
-
-    return
-  fi
-
-  sleep 0.667
-}
-
-# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
-
-gvim_move_cursor_to_line_and_column () {
-  local server_arg="$1"
-  local row_number="$2"
-  local col_number="${3:-0}"
-
-  if [ -z "${row_number}" ] || [ -z "${col_number}" ]; then
-    return
-  fi
-
-  $(gvim_procname) \
-    ${server_arg} \
-    --remote-send "<ESC>:call cursor(${row_number}, ${col_number})<CR>"
 }
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
