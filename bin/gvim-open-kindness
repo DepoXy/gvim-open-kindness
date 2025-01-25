@@ -101,7 +101,7 @@ gvim_open_kindness () {
   if [ -n "${1+x}" ] && [ ! -f "$1" ]; then row_number="$1"; shift; fi
   if [ -n "${1+x}" ] && [ ! -f "$1" ]; then col_number="$1"; shift; fi
 
-  must_locate_gvim_or_notify_and_exit
+  must_locate_executable_or_notify_and_exit
 
   servername="$(gvim_ensure_servername_or_use_default "${servername}")"
 
@@ -146,7 +146,7 @@ gvim_open_kindness () {
 #     /home/user/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:
 #       /usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin
 
-must_locate_gvim_or_notify_and_exit () {
+must_locate_executable_or_notify_and_exit () {
   PATH="/usr/local/bin:${PATH}"
 
   # Aka ${HOMEBREW_PREFIX}
