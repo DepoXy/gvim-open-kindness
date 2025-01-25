@@ -166,7 +166,7 @@ must_locate_executable_or_notify_and_exit () {
   if ! type gvim > /dev/null 2>&1; then
     stderr_or_desktop_notify "gvim-open-kindness" "Where's gvim?"
 
-    exit 1
+    exit_1
   fi
 }
 
@@ -248,7 +248,7 @@ desktop_notify () {
     # Undesirable branch.
 
     local tempfile
-    tempfile="$(mktemp /tmp/$(basename -- "$0").XXXXXX)" || exit 1
+    tempfile="$(mktemp /tmp/$(basename -- "$0").XXXXXX)" || exit_1
 
     echo "ERROR: ${summary}: ${body}" >> "${tempfile}"
   fi
@@ -380,12 +380,67 @@ os_is_macos () {
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
-# Run the function if being executed.
-# Otherwise being sourced, so do not.
+clear_traps () {
+  trap - EXIT INT
+}
+
+set_traps () {
+  trap -- trap_exit EXIT
+  trap -- trap_int INT
+}
+
+exit_0 () {
+  clear_traps
+
+  exit 0
+}
+
+exit_1 () {
+  clear_traps
+
+  exit 1
+}
+
+trap_exit () {
+  clear_traps
+
+  # USAGE: Alert on unexpected error path, so you can add happy path.
+  >&2 echo "ALERT: "$(basename -- "$0")" exited abnormally!"
+  >&2 echo "- Hint: Enable \`set -x\` and run again..."
+
+  exit 2
+}
+
+trap_int () {
+  clear_traps
+
+  exit 3
+}
+
+# ***
+
 SCRIPT_NAME="gvim-open-kindness"
-if [ "$(basename -- "$(realpath -- "$0")")" = "${SCRIPT_NAME}" ]; then
+main () {
+  local proc_bname
+  proc_bname="$(basename -- "$0")"
+
+  if [ "${proc_bname}" != "${SCRIPT_NAME}" ]; then
+    return
+  fi
+
+  # ***
+
+  set -e
+
+  set_traps
+
+  # ***
+
   source_deps
 
   gvim_open_kindness "$@"
-fi
+
+}
+
+main "$@"
 
