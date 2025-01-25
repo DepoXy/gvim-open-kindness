@@ -107,6 +107,15 @@ NVIM_OPEN_SOCKETNAME="${NVIM_OPEN_SOCKETNAME:-NVIM}"
 
 NVIM_OPEN_APPNAME="${NVIM_OPEN_APPNAME:-nvim}"
 
+# USAGE: Enable always running GVim or Neovim.
+# - Set one of these environs to always use gvim or nvim, regardless of $0.
+# - If both are 'true', this scripts uses nvim.
+# - If neither are 'true', this script picks gvim or nvim by checking
+#   whether user invoked `gvim-open-kindness` or `nvim-open-kindness`.
+
+GVIM_OPEN_PREFER_GVIM=${GVIM_OPEN_PREFER_GVIM:-false}
+GVIM_OPEN_PREFER_NVIM=${GVIM_OPEN_PREFER_NVIM:-false}
+
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
 source_deps () {
@@ -168,6 +177,8 @@ gvim_open_kindness () {
   if [ -n "${1+x}" ] && [ "$1" != "--" ] && [ ! -f "$1" ]; then col_number="$1"; shift; fi
   if [ "$1" = "--" ]; then shift; fi
 
+  adjust_gvim_or_nvim_per_user_pref_environ
+
   must_locate_executable_or_notify_and_exit
 
   local socket_path=""
@@ -197,6 +208,19 @@ gvim_open_kindness () {
 }
 
 # ***
+
+# This script picked GVIM or NVIM based on executable user ran
+# (`gvim-open-kindness` vs. `nvim-open-kindness`) but user can
+# override/force a preference using GVIM_OPEN_PREFER_* environ.
+adjust_gvim_or_nvim_per_user_pref_environ () {
+  if ${GVIM_OPEN_PREFER_GVIM:-false}; then
+    GVIM_OPEN_EDITOR="GVIM"
+  fi
+
+  if ${GVIM_OPEN_PREFER_NVIM:-false}; then
+    GVIM_OPEN_EDITOR="NVIM"
+  fi
+}
 
 is_editor_gvim () {
   test "${GVIM_OPEN_EDITOR:-GVIM}" = "GVIM"
