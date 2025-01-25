@@ -4,13 +4,14 @@
 # Project: https://github.com/DepoXy/gvim-open-kindness#🐬
 # License: MIT. Please find more in the LICENSE file.
 
-# Copyright (c) © 2021-2023 Landon Bouma. All Rights Reserved.
+# Copyright (c) © 2021-2025 Landon Bouma. All Rights Reserved.
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
 # This usage is not actually displayed.
 gvim_open_kindness_print_usage () {
   echo 'USAGE: `gvim-open-kindness` <servername> <line> <column> <path>...'
+  echo '       `nvim-open-kindness` <socketname> <line> <column> <path>...'
 }
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
@@ -27,19 +28,30 @@ gvim_open_kindness_print_usage () {
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
-# By default, this script uses the same servername when it's called,
-# so that files are opened in the same instance of gVim.
+# By default, this script uses the same servername or socketname when
+# it's called, so that files are opened in the same editor instance.
 # - On Linux (X11), the servername should be unique enough that
 #   xdotool can identify the gVim window by its name.
 # - On macOS, there's no xdotool, but also MacVim brings itself to
 #   front by default, so there's nothing lacking, either.
+# - Neovim uses a socket to communicate and doesn't show that name
+#   in the window titlebar.
 #
-# YOU: The server name appears in the Vim title bar, so, please,
-#      personalize it!
+# USAGE: Personalize the server name, which appears in the Vim title bar.
 GVIM_OPEN_SERVERNAME="${GVIM_OPEN_SERVERNAME:-GVIM}"
-# - Pro tip: You can even use emojis, e.g.,:
+# - Pro tip: You can use emojis, e.g.,:
 #
 #   GVIM_OPEN_SERVERNAME="${GVIM_OPEN_SERVERNAME:-🖤}"
+
+# You won't see this name anywhere, 
+NVIM_OPEN_SOCKETNAME="${NVIM_OPEN_SOCKETNAME:-NVIM}"
+
+# USAGE: Choose default command for starting new nvim client:
+#
+#   NVIM_OPEN_APPNAME="${NVIM_OPEN_APPNAME:-neovide}"
+#   NVIM_OPEN_APPNAME="${NVIM_OPEN_APPNAME:-nvim}"
+
+NVIM_OPEN_APPNAME="${NVIM_OPEN_APPNAME:-nvim}"
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
@@ -87,27 +99,30 @@ print_homebrew_path () {
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
 gvim_open_kindness () {
-  local servername
+  local server_id
   local row_number
   local col_number
 
   # 2021-08-19: Be clever and assume if any argument is a valid file
   # path, user chose not to bother specifing all non-file parameters.
   # - (I don't think we'll find a compelling use case where
-  #    the user has a file with the same name as the chosen
-  #    servername, or a file with only numbers that matches
+  #    the user has a file with the same name as the given
+  #    server id, or a file with only numbers that matches
   #    a row or column number argument, so this seems safe.)
-  if [ -n "${1+x}" ] && [ ! -f "$1" ]; then servername="$1"; shift; fi
+  if [ -n "${1+x}" ] && [ ! -f "$1" ]; then server_id="$1"; shift; fi
   if [ -n "${1+x}" ] && [ ! -f "$1" ]; then row_number="$1"; shift; fi
   if [ -n "${1+x}" ] && [ ! -f "$1" ]; then col_number="$1"; shift; fi
 
   must_locate_executable_or_notify_and_exit
 
-  servername="$(gvim_ensure_servername_or_use_default "${servername}")"
+  local socket_path=""
+  local server_arg=""
+  local is_server_running=true
+  gvim_ensure_server_id_or_use_default "${server_id}"
 
   # Fallback on a named file if the user doesn't specify a file to open,
-  # because a bare command, e.g., gvim --servername ${servername}, opens
-  # a new gVim with the name "${servername}1". Don't know why. (And does
+  # because a bare command, e.g., gvim --servername ${server_id}, opens
+  # a new gVim with the name "${server_id}1". Don't know why. (And does
   # not have to be a reST file, I just have an empty README in my home.)
   # MAYBE/2021-02-21: There's probably a way to open a new file to edit.
   # TRYME/2022-10-13: What happens if the target file does not exist?
@@ -115,16 +130,31 @@ gvim_open_kindness () {
     set -- "${HOME}/README.rst"
   fi
 
-  gvim_relocate_cursor_to_editing_window "${servername}"
+  gvim_relocate_cursor_to_editing_window "${server_arg}"
 
-  gvim_open_files "${servername}" "$@"
+  gvim_open_files "${server_arg}" "${socket_path}" "$@"
 
   gvim_sleep_briefly_macvim_needs_a_moment
 
-  gvim_move_cursor_to_line_and_column "${servername}" "${row_number}" "${col_number}"
+  gvim_move_cursor_to_line_and_column "${server_arg}" "${row_number}" "${col_number}"
 
-  gvim_bring_window_to_front "${servername}"
+  gvim_bring_window_to_front "${server_id}"
+}
 
+# ***
+
+is_editor_gvim () {
+  test "${GVIM_OPEN_EDITOR:-GVIM}" = "GVIM"
+}
+
+gvim_procname () {
+  if is_editor_gvim; then
+    # Runs MacVim on macOS.
+    printf "%s" "gvim"
+  else
+    # Use nvim to communicate with NVIM_OPEN_APPNAME instance.
+    printf "%s" "nvim"
+  fi
 }
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
@@ -163,8 +193,27 @@ must_locate_executable_or_notify_and_exit () {
   # Support Linux users with custom build at conventional location.
   PATH="${HOME}/.local/bin:${PATH}"
 
-  if ! type gvim > /dev/null 2>&1; then
-    stderr_or_desktop_notify "gvim-open-kindness" "Where's gvim?"
+  must_verify_command "$(gvim_procname)"
+
+  if ! is_editor_gvim; then
+    if [ "${NVIM_OPEN_APPNAME}" != "neovide" ] \
+      && [ "${NVIM_OPEN_APPNAME}" != "nvim" ] \
+    ; then
+      # USAGE: Add new editor support to gvim_open_files, below.
+      >&2 echo "ERROR: Unrecognized Neovim app: ${NVIM_OPEN_APPNAME}"
+
+      exit_1
+    fi
+
+    must_verify_command "${NVIM_OPEN_APPNAME}"
+  fi
+}
+
+must_verify_command () {
+  local cmd="$1"
+
+  if ! type "${cmd}" > /dev/null 2>&1; then
+    stderr_or_desktop_notify "gvim-open-kindness" "Where's ${cmd}?"
 
     exit_1
   fi
@@ -256,14 +305,36 @@ desktop_notify () {
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
-gvim_ensure_servername_or_use_default () {
-  local servername="$1"
+# `local` vars. set for caller:
+#  local server_id
+#  local server_arg
+#  local socket_path
+#  local is_server_running
+gvim_ensure_server_id_or_use_default () {
+  local server_id_arg="$1"
 
-  if [ -z "${servername}" ]; then
-    servername="${GVIM_OPEN_SERVERNAME:-GVIM}"
+  server_id="${server_id_arg}"
+  socket_path=""
+  server_arg=""
+  is_server_running=true
+
+  if is_editor_gvim; then
+    if [ -z "${server_id}" ]; then
+      server_id="${GVIM_OPEN_SERVERNAME:-GVIM}"
+    fi
+    server_arg="--servername ${server_id}"
+    # We don't need to know if GVim instance running already or not.
+    is_server_running=true
+  else
+    if [ -z "${server_id}" ]; then
+      server_id="${NVIM_OPEN_SOCKETNAME:-NVIM}"
+    fi
+    socket_path="/tmp/nvim.socket-${server_id}"
+    # This won't work unless we `eval` the command later:
+    #   server_arg="--server \"${socket_path}\""
+    server_arg="--server ${socket_path}"
+    is_server_running=$(test -S ${socket_path} && echo true || echo false)
   fi
-
-  echo "${servername}"
 }
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
@@ -289,12 +360,24 @@ gvim_ensure_servername_or_use_default () {
 # Finally, use `silent!` to ignore error if autoload/ fcn. absent. 
 
 gvim_relocate_cursor_to_editing_window () {
-  local servername="$1"
+  local server_arg="$1"
 
-  gvim \
-    --servername "${servername}" \
+  if ! ${is_server_running}; then
+
+    return
+  fi
+
+  # If gvim not running, e.g.:
+  #   E247: No registered server named "GVIM": Send failed.
+
+  # MAYBE/2025-01-24: If is_server_running, nvim shouldn't generate any output,
+  # so we could remove the stream inhibitors. Though if it fails, it might be
+  # a lot of garbage output.
+  $(gvim_procname) \
+    ${server_arg} \
     --remote-send "<ESC>:silent! call g:embrace#windows#FocusCursorInNormalBufferWindow()<CR>" \
-    > /dev/null 2>&1
+    > /dev/null 2>&1 \
+    || is_server_running=false
 }
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
@@ -311,11 +394,35 @@ gvim_relocate_cursor_to_editing_window () {
 #   ...
 
 gvim_open_files () {
-  local servername="$1"
-  shift
+  local server_arg="$1"
+  local socket_path="$2"
+  shift 2
 
-  gvim --servername "${servername}" --remote-silent "$@" \
-    2>/dev/null
+  # DUNNO: Relative paths don't work with nvim, apparently:
+  #   cd ~/path/to/gvim-open-kindness
+  #   nvim --server /tmp/neovide.socket --remote-silent bin/nvim-open-kindness
+  # Opens the file: ~/bin/nvim-open-kindness
+
+  if ! ${is_server_running} && ! is_editor_gvim; then
+    # Run user's preferred GUI, e.g., Neovide
+    ${NVIM_OPEN_APPNAME:-neovide} -- --listen ${socket_path} "$@" & \
+      2>/dev/null
+  else
+    # gvim or nvim
+    eval "$(gvim_procname) ${server_arg} \
+      --remote-silent $(expand_paths "$@") \
+      2>/dev/null"
+  fi
+}
+
+# Handles any path characters except double quote.
+expand_paths () {
+  for path in "$@"; do
+    printf "${path}\0"
+  done \
+    | xargs -0 realpath \
+    | $(command -v gsed || command -v sed) 's/^\(.*\)$/"\1"/' \
+    | tr "\n" " "
 }
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
@@ -329,7 +436,10 @@ gvim_open_files () {
 #  second for file load to settle in gVim, then try jumping cursor.)
 
 gvim_sleep_briefly_macvim_needs_a_moment () {
-  ! os_is_macos && return
+  if ! os_is_macos || ! is_editor_gvim; then
+
+    return
+  fi
 
   sleep 0.667
 }
@@ -337,7 +447,7 @@ gvim_sleep_briefly_macvim_needs_a_moment () {
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
 gvim_move_cursor_to_line_and_column () {
-  local servername="$1"
+  local server_arg="$1"
   local row_number="$2"
   local col_number="${3:-0}"
 
@@ -345,8 +455,8 @@ gvim_move_cursor_to_line_and_column () {
     return
   fi
 
-  gvim \
-    --servername "${servername}" \
+  $(gvim_procname) \
+    ${server_arg} \
     --remote-send "<ESC>:call cursor(${row_number}, ${col_number})<CR>"
 }
 
@@ -358,18 +468,60 @@ gvim_move_cursor_to_line_and_column () {
 # Because it's more often than not that I want to use Vim after opening a
 # file in it, I enabled this behavior for X11.
 
-gvim_bring_window_to_front () {
-  local servername="$1"
+# FTREQ/2025-01-25: Add Wayland path.
+# - For now, xdotool may work if GVim uses Xwayland.
 
-  # On macOS, there's no xdotool, but gVim fronts itself automatically.
-  os_is_macos && return
+gvim_bring_window_to_front () {
+  if ! os_is_macos; then
+    gvim_bring_window_to_front_X "$@"
+  else
+    gvim_bring_window_to_front_macOS "$@"
+  fi
+}
+  
+gvim_bring_window_to_front_X () {
+  local server_id="$1"
+
+  # On macOS, (thankfully) gVim fronts automatically (and there's no xdotool).
+  if os_is_macos || ! command -v xdotool >/dev/null; then
+
+    return 0
+  fi
 
   # On Linux, or at least Linux Mint MATE, gVim doesn't front on its
   # own. So go grab it.
   # - Note that xdotool (for me) spits out an error message:
   #     XGetWindowProperty[_NET_WM_DESKTOP] failed (code=1)
   #   but it works nonetheless, so chuck the error.
-  xdotool search --name "${servername}" windowactivate > /dev/null 2>&1
+  xdotool search --name "${server_id}" windowactivate > /dev/null 2>&1
+}
+  
+# REFER: Requires Hammyspoony Hammerspoon Spoon to front nvim TUI:
+#
+#   https://github.com/DepoXy/macOS-Hammyspoony#🥄
+
+gvim_bring_window_to_front_macOS () {
+  local server_id="$1"
+
+  if ! ${is_server_running} || is_editor_gvim; then
+
+    return 0
+  fi
+
+  if is_editor_gvim; then
+    # MacVim fronts itself.
+    # - If you have another use case (e.g., terminal Vim),
+    #   add it here (e.g., call hammerspoon://setFrontmost).
+    :
+  elif [ "${NVIM_OPEN_APPNAME}" = "nvim" ]; then
+    open -g "hammerspoon://setFrontmost?name=${server_id}" \
+      2> /dev/null \
+      || true
+  else
+    # E.g., "neovide"
+    open -a "${NVIM_OPEN_APPNAME}" \
+      || true
+  fi
 }
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
@@ -419,12 +571,23 @@ trap_int () {
 
 # ***
 
-SCRIPT_NAME="gvim-open-kindness"
+SCRIPT_NAME_GVIM="gvim-open-kindness"
+SCRIPT_NAME_NVIM="nvim-open-kindness"
+
 main () {
   local proc_bname
   proc_bname="$(basename -- "$0")"
 
-  if [ "${proc_bname}" != "${SCRIPT_NAME}" ]; then
+  local run_as=""
+
+  # Run the function if being executed.
+  # Otherwise being sourced, so do not.
+  if [ "${proc_bname}" = "${SCRIPT_NAME_GVIM}" ]; then
+    run_as="GVIM"
+  elif [ "${proc_bname}" = "${SCRIPT_NAME_NVIM}" ]; then
+    run_as="NVIM"
+  else
+
     return
   fi
 
@@ -438,8 +601,13 @@ main () {
 
   source_deps
 
+  GVIM_OPEN_EDITOR=${GVIM_OPEN_EDITOR:-${run_as}}
+
   gvim_open_kindness "$@"
 
+  # ***
+
+  clear_traps
 }
 
 main "$@"

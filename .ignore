@@ -5,3 +5,6 @@
 
 /.git/
 
+# -> gvim-open-kindness
+/bin/nvim-open-kindness
+
