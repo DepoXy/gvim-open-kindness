@@ -30,26 +30,80 @@ gvim_open_kindness_print_usage () {
 
 # By default, this script uses the same servername or socketname when
 # it's called, so that files are opened in the same editor instance.
+
+# USAGE: Customize Vim --servername (optional), which you may see in
+#        the Vim titlebar.
+#
 # - On Linux (X11), the servername should be unique enough that
 #   xdotool can identify the gVim window by its name.
-# - On macOS, there's no xdotool, but also MacVim brings itself to
-#   front by default, so there's nothing lacking, either.
-# - Neovim uses a socket to communicate and doesn't show that name
-#   in the window titlebar.
+#
+#   - On macOS, there's no xdotool, but also MacVim brings itself to
+#     front by default. You'll still see the servername in the title-
+#     bar.
+#
+# SAVVY: Pro tip: You can use emojis, e.g.,:
+#
+#     GVIM_OPEN_SERVERNAME="${GVIM_OPEN_SERVERNAME:-🖤}"
+#
+#   which can be used to ensure that the servername is not only
+#   unique, but "fun".
 #
 # USAGE: Personalize the server name, which appears in the Vim title bar.
-GVIM_OPEN_SERVERNAME="${GVIM_OPEN_SERVERNAME:-GVIM}"
-# - Pro tip: You can use emojis, e.g.,:
-#
-#   GVIM_OPEN_SERVERNAME="${GVIM_OPEN_SERVERNAME:-🖤}"
 
-# You won't see this name anywhere, 
+GVIM_OPEN_SERVERNAME="${GVIM_OPEN_SERVERNAME:-GVIM}"
+
+# USAGE: Customize Neovim --server socket name postfix (optional),
+#        which you might add to the Neovim titlebar title so that
+#        you can easity find and front nvim terminal windows.
+#
+# - On Neovim, the socketname is used to create a socket that Neovim uses
+#   to communicate amongst itself. However, Neovim doesn't show the socket
+#   name in the window titlebar by default, so you may not care to customize
+#   this value.
+#
+#   - Though if you use the vim-title-bar-time-of-day plugin, you might care:
+#
+#       https://github.com/landonb/vim-title-bar-time-of-day#🕰️
+#
+#     That plugin prints the socket name postfix to the Vim title bar
+#     so that this script can find and front the window when the user
+#     is running nvim in a terminal window.
+#
+#     (If user is instead running a GUI, e.g., Neovide, this script
+#      will call the `open` command, e.g., `open -a neovide`. But if
+#      user is running nvim in a terminal, and if they have multiple
+#      terminal windows open, `open` won't help. So this script uses
+#      a Hammerspoon Spoon instead to find and front the window:
+#
+#         https://github.com/DepoXy/macOS-Hammyspoony#🥄
+#
+#       https://github.com/DepoXy/macOS-Hammyspoony/blob/release/Source/URISetFrontmost.spoon/init.lua
+#
+#      See the `open -g "hammerspoon://..."` call, below.)
+#
+#   - So feel free to customize this value, especially if you use the
+#     server name in the window title.
+
 NVIM_OPEN_SOCKETNAME="${NVIM_OPEN_SOCKETNAME:-NVIM}"
 
-# USAGE: Choose default command for starting new nvim client:
+# USAGE: Specify the command to call when starting a new nvim server.
+# - When opening a file in an existing nvim instance, this script calls
+#   `nvim` to communicate with it. But if the server is not yet running,
+#   this script runs this command to start a new editor instance.
+# - Note (#aside) that Neovide doesn't front itself automatically, so this
+#   script calls `open -a {app}` to ensure the chosen editor is fronted.
+#   - Or if nvim is target app, then this script uses hammerspoon:// URI;
+#     see previous comment.
+# - CHOOS: Some nvim TUIs or GUIs you might entertain:
+#   - Neovim  — https://neovim.io/  # Neovim itself, in a terminal
+#   - Neovide — https://neovide.dev
+#   - VimR    — https://github.com/qvacua/vimr
+#   - envim   — https://github.com/tk-shirasaka/envim
+#   - vv      — https://github.com/vv-vim/vv
 #
-#   NVIM_OPEN_APPNAME="${NVIM_OPEN_APPNAME:-neovide}"
 #   NVIM_OPEN_APPNAME="${NVIM_OPEN_APPNAME:-nvim}"
+#   NVIM_OPEN_APPNAME="${NVIM_OPEN_APPNAME:-neovide}"
+#   etc.
 
 NVIM_OPEN_APPNAME="${NVIM_OPEN_APPNAME:-nvim}"
 
