@@ -163,9 +163,10 @@ gvim_open_kindness () {
   #    the user has a file with the same name as the given
   #    server id, or a file with only numbers that matches
   #    a row or column number argument, so this seems safe.)
-  if [ -n "${1+x}" ] && [ ! -f "$1" ]; then server_id="$1"; shift; fi
-  if [ -n "${1+x}" ] && [ ! -f "$1" ]; then row_number="$1"; shift; fi
-  if [ -n "${1+x}" ] && [ ! -f "$1" ]; then col_number="$1"; shift; fi
+  if [ -n "${1+x}" ] && [ "$1" != "--" ] && [ ! -f "$1" ]; then server_id="$1"; shift; fi
+  if [ -n "${1+x}" ] && [ "$1" != "--" ] && [ ! -f "$1" ]; then row_number="$1"; shift; fi
+  if [ -n "${1+x}" ] && [ "$1" != "--" ] && [ ! -f "$1" ]; then col_number="$1"; shift; fi
+  if [ "$1" = "--" ]; then shift; fi
 
   must_locate_executable_or_notify_and_exit
 
