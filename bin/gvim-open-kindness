@@ -36,7 +36,7 @@ gvim_open_kindness_print_usage () {
 #
 # YOU: The server name appears in the Vim title bar, so, please,
 #      personalize it!
-GVIM_OPEN_SERVERNAME="${GVIM_OPEN_SERVERNAME:-SAMPI}"
+GVIM_OPEN_SERVERNAME="${GVIM_OPEN_SERVERNAME:-GVIM}"
 # - Pro tip: You can even use emojis, e.g.,:
 #
 #   GVIM_OPEN_SERVERNAME="${GVIM_OPEN_SERVERNAME:-🖤}"
@@ -277,7 +277,7 @@ gvim_ensure_servername_or_use_default () {
   # always targeted when this command is called. The name does not matter, but it should be unique
   # among all windows so that xdotool can distinguish it.
   if [ -z "${servername}" ]; then
-    servername="${GVIM_OPEN_SERVERNAME:-SAMPI}"
+    servername="${GVIM_OPEN_SERVERNAME:-GVIM}"
   fi
 
   echo "${servername}"
@@ -326,7 +326,7 @@ gvim_servername_active () {
 # - So sending keystrokes to invoke command via --remote-send.
 #
 # Also, --remote-send fails if the server is not started, e.g.,
-#   E247: no registered server named "SAMPI": Send failed.
+#   E247: no registered server named "GVIM": Send failed.
 # so toss the stderr stream.
 #
 # Finally, use `silent!` to ignore error if autoload/ fcn. absent. 
