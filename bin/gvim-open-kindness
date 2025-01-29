@@ -497,8 +497,10 @@ gvim_open_files () {
   # Opens the file: ~/bin/nvim-open-kindness
 
   local cursor_cmd=""
+  local cursor_send=""
   if [ -n "${row_number}" ] && [ -n "${col_number}" ]; then
     cursor_cmd="-c 'call cursor(${row_number}, ${col_number})'"
+    cursor_send="--remote-send '<ESC>:call cursor(${row_number}, ${col_number})<CR>'"
   fi
 
   if ! ${is_server_running} && ! is_editor_gvim; then
@@ -518,13 +520,36 @@ gvim_open_files () {
     # (which may or may not be running).
     # - BUGGY: See command above re: --remote-send leaves user in Normal
     #   mode, even if they were in Insert mode (and we prob. cannot fix).
-    # gvim or nvim
-    eval "$(gvim_procname) \
-      ${server_arg} \
-      ${cursor_cmd} \
-      --remote-silent \
-      $(expand_paths "$@") \
-      2>/dev/null"
+    local cursor_arg=""
+    if is_editor_gvim; then
+      cursor_arg="${cursor_cmd}"
+    else
+      cursor_arg="${cursor_send}"
+    fi
+
+    if is_editor_gvim; then
+      eval "$(gvim_procname) \
+        ${server_arg} \
+        ${cursor_arg} \
+        --remote-silent \
+        $(expand_paths "$@") \
+        2>/dev/null"
+    else
+      eval "$(gvim_procname) \
+        ${server_arg} \
+        --remote-silent \
+        $(expand_paths "$@") \
+        2>/dev/null"
+      if [ -n "${cursor_arg}" ]; then
+        # Without the eval, opens file, but when user presses any key,
+        # cursor jumps to command line which has `:call cursor(X, X)`
+        # printed. TL_DR: <CR> in var. doesn't work without the eval.
+        eval "$(gvim_procname) \
+          ${server_arg} \
+          ${cursor_arg} \
+          2>/dev/null"
+      fi
+    fi
   fi
 }
 
