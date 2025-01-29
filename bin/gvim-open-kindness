@@ -116,6 +116,11 @@ NVIM_OPEN_APPNAME="${NVIM_OPEN_APPNAME:-nvim}"
 GVIM_OPEN_PREFER_GVIM=${GVIM_OPEN_PREFER_GVIM:-false}
 GVIM_OPEN_PREFER_NVIM=${GVIM_OPEN_PREFER_NVIM:-false}
 
+# USAGE: Set or use this environ to add the `vim -u <vimrc>` option
+# when initiating a new Vim/Neovim instance.
+
+GVIM_OPEN_INIT_VIMRC="${GVIM_OPEN_INIT_VIMRC}"
+
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
 source_deps () {
@@ -503,13 +508,18 @@ gvim_open_files () {
     cursor_send="--remote-send '<ESC>:call cursor(${row_number}, ${col_number})<CR>'"
   fi
 
+  local vimrc_cmd=""
+  if [ -n "${GVIM_OPEN_INIT_VIMRC}" ]; then
+    vimrc_cmd="-u \"${GVIM_OPEN_INIT_VIMRC}\""
+  fi
+
   if ! ${is_server_running} && ! is_editor_gvim; then
     # Editor not running, and editor not GVim.
     # - Run user's preferred GUI, e.g., Neovide.
     if [ "${NVIM_OPEN_APPNAME}" = "neovide" ]; then
-      eval "neovide -- --listen ${socket_path} ${cursor_cmd} $@ & 2>/dev/null"
+      eval "neovide -- --listen ${socket_path} ${vimrc_cmd} ${cursor_cmd} $@ & 2>/dev/null"
     elif [ "${NVIM_OPEN_APPNAME}" = "nvim" ]; then
-      eval "nvim --listen ${socket_path} ${cursor_cmd} $@"
+      eval "nvim --listen ${socket_path} ${vimrc_cmd} ${cursor_cmd} $@"
       # Run until user quits nvim.
 
       exit_0
