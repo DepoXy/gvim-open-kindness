@@ -448,6 +448,22 @@ gvim_relocate_cursor_to_editing_window () {
   # MAYBE/2025-01-24: If is_server_running, nvim shouldn't generate any output,
   # so we could remove the stream inhibitors. Though if it fails, it might be
   # a lot of garbage output.
+
+  # BUGGY/2025-01-29: This would be a *FIXEM*, but I doubt there's a good fix.
+  # - Both calls to --remote-send (see also :cursor call below) must <ESC>
+  #   just in case user is in Insert mode.
+  #   - But then we have to leave user in Normal mode, because there's no
+  #     way to know the state before the --remote-send!
+  #     - Maybe: Is there a single character you could send, like send `i`,
+  #       then <ESC> and run a command — and if that command sees that an
+  #       'i' was just inserted into the buffer, remove it, and assume user
+  #       was previously in Insert mode.
+  #       - Although how do you know who created the 'i'? Is there a timestamp
+  #         for the last edit, maybe the undo knows? I don't think you can tell,
+  #         I was just spitballing ideas... cuz I don't know it there's a sol'n
+  #         to this dilemma at all. You cannot use gvim-open-kindness and remain
+  #         in Insert mode =(.
+
   $(gvim_procname) \
     ${server_arg} \
     --remote-send "<ESC>:silent! call g:embrace#windows#FocusCursorInNormalBufferWindow()<CR>" \
