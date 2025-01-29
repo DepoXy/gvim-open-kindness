@@ -502,7 +502,8 @@ gvim_open_files () {
   fi
 
   if ! ${is_server_running} && ! is_editor_gvim; then
-    # Run user's preferred GUI, e.g., Neovide
+    # Editor not running, and editor not GVim.
+    # - Run user's preferred GUI, e.g., Neovide.
     if [ "${NVIM_OPEN_APPNAME}" = "neovide" ]; then
       eval "neovide -- --listen ${socket_path} ${cursor_cmd} $@ & 2>/dev/null"
     elif [ "${NVIM_OPEN_APPNAME}" = "nvim" ]; then
@@ -513,6 +514,10 @@ gvim_open_files () {
     fi
     # else, Unreachable path
   else
+    # The NeoVim instances is already running, or this is GVim
+    # (which may or may not be running).
+    # - BUGGY: See command above re: --remote-send leaves user in Normal
+    #   mode, even if they were in Insert mode (and we prob. cannot fix).
     # gvim or nvim
     eval "$(gvim_procname) \
       ${server_arg} \
