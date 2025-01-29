@@ -498,7 +498,7 @@ gvim_open_files () {
 
   local cursor_cmd=""
   if [ -n "${row_number}" ] && [ -n "${col_number}" ]; then
-    cursor_cmd="-c \"call cursor(${row_number}, ${col_number})\""
+    cursor_cmd="-c 'call cursor(${row_number}, ${col_number})'"
   fi
 
   if ! ${is_server_running} && ! is_editor_gvim; then
