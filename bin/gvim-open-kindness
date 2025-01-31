@@ -526,7 +526,7 @@ gvim_open_files () {
     fi
     # else, Unreachable path
   else
-    # The NeoVim instances is already running, or this is GVim
+    # The Neovim instance is already running, or this is GVim
     # (which may or may not be running).
     # - BUGGY: See command above re: --remote-send leaves user in Normal
     #   mode, even if they were in Insert mode (and we prob. cannot fix).
