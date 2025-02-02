@@ -421,7 +421,7 @@ gvim_ensure_server_id_or_use_default () {
 
 # REFER/2024-12-15: Calls (optional) FocusCursorInNormalBufferWindow in
 #   https://github.com/embrace-vim/vim-buffer-delights#🍧
-# ~/.vim/pack/embrace-vim/start/vim-buffer-delights/autoload/embrace/windows.vim
+# ~/.kit/nvim/embrace-vim/start/vim-buffer-delights/autoload/embrace/windows.vim
 
 # Adjust the Vim cursor before opening the file, if necessary, so
 # the new buffer does not replace the quickfix buffer, an open help
