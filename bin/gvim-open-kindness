@@ -385,6 +385,10 @@ desktop_notify () {
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
+# REFER: How to communicate with nvim server:
+# https://neovim.io/doc/user/api.html#RPC
+# https://neovim.io/doc/user/builtin.html#serverstart()
+
 # `local` vars. set for caller:
 #  local server_id
 #  local server_arg
