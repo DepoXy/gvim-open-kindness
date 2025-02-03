@@ -171,15 +171,27 @@ gvim_open_kindness () {
   local row_number
   local col_number
 
-  # 2021-08-19: Be clever and assume if any argument is a valid file
-  # path, user chose not to bother specifing all non-file parameters.
-  # - (I don't think we'll find a compelling use case where
-  #    the user has a file with the same name as the given
-  #    server id, or a file with only numbers that matches
-  #    a row or column number argument, so this seems safe.)
-  if [ -n "${1+x}" ] && [ "$1" != "--" ] && [ ! -f "$1" ]; then server_id="$1"; shift; fi
-  if [ -n "${1+x}" ] && [ "$1" != "--" ] && [ ! -f "$1" ]; then row_number="$1"; shift; fi
-  if [ -n "${1+x}" ] && [ "$1" != "--" ] && [ ! -f "$1" ]; then col_number="$1"; shift; fi
+  # USAGE/2025-02-03: This is script meant to be called via tooling, and
+  # not directly, so caller can specify a server ID, and rol and column,
+  # followed by variadic args (one or more file paths).
+  # - HSTRY: From 2021-08-19 to now, the arg parser would assume if any
+  #   argument is a valid file path, user chose not to bother specifing
+  #   all non-file parameters, so that user could run this script from
+  #   CLI.
+  #   - E.g., `gvim-open-kindness foo` would interpret 'foo' as file if
+  #     'foo' exists, otherwise it would use 'foo' as server/socket ID.
+  #   - But UX is bad if 'foo' is not a file, but user assumes it is,
+  #     because then script opens a *new* editor instance (using 'foo' as
+  #     its server/socket ID). But it's not obvious to user what happened.
+  #   - So now it's recommeded you make an alias to this script instead,
+  #     e.g.,
+  #       # Use `fs` to edit file(s) using default server/socket ID.
+  #       alias fs="gvim-open-kindness '' '' ''"
+  #       # Use `fa` to edit file(s) in a seperate editor instance.
+  #       alias fa="gvim-open-kindness '🐬' '' ''"
+  if [ -n "${1+x}" ] && [ "$1" != "--" ]; then server_id="$1"; shift; fi
+  if [ -n "${1+x}" ] && [ "$1" != "--" ]; then row_number="$1"; shift; fi
+  if [ -n "${1+x}" ] && [ "$1" != "--" ]; then col_number="$1"; shift; fi
   if [ "$1" = "--" ]; then shift; fi
 
   adjust_gvim_or_nvim_per_user_pref_environ
