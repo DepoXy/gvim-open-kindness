@@ -612,8 +612,7 @@ gvim_bring_window_to_front () {
 gvim_bring_window_to_front_X () {
   local server_id="$1"
 
-  # On macOS, (thankfully) gVim fronts automatically (and there's no xdotool).
-  if os_is_macos || ! command -v xdotool >/dev/null; then
+  if ! command -v xdotool >/dev/null; then
 
     return 0
   fi
