@@ -121,6 +121,37 @@ GVIM_OPEN_PREFER_NVIM=${GVIM_OPEN_PREFER_NVIM:-false}
 
 GVIM_OPEN_INIT_VIMRC="${GVIM_OPEN_INIT_VIMRC}"
 
+# USAGE: Pick a default behavior when the editor is launched for the
+# first time and no file(s) are specified:
+# - Do nothing special; let Vim start normally.
+#   - Same as:
+#     unset -v GVIM_OPEN_FILE_ON_SPAWN
+#     # OR:
+#     GVIM_OPEN_FILE_ON_SPAWN=""
+# - Open a specific file, e.g., ~/README.rst
+#   - E.g.,
+#     GVIM_OPEN_FILE_ON_SPAWN="${HOME}/README.rst"
+# - Configure a scratch buffer (that disappears when it's unloaded
+#   from all windows unless the user saves it; unlike normal Vim
+#   startup that creates a [No Name] buffer that user has to
+#   explicitly close if they don't want it).
+#   - Use the special keyword "[Scratch]", e.g.,
+#     GVIM_OPEN_FILE_ON_SPAWN="[Scratch]"
+# SAVVY: These do not apply when the editor is already running;
+# in that case, the specified file(s) will be opened in the
+# current instance. Or, if no file(s) are specified, the editor
+# will simply be fronted.
+# USAGE: You can use either GVIM_ or NVIM_ variation, your pick.
+# - Internally, we use the NVIM_-prefixed variants.
+
+NVIM_OPEN_FILE_ON_SPAWN="${NVIM_OPEN_FILE_ON_SPAWN:-${GVIM_OPEN_FILE_ON_SPAWN}}"
+
+# USAGE: Magic NVIM_OPEN_FILE_ON_SPAWN you can use to start (n)vim
+# with scratch buffer when spawning new instance and no file paths
+# specified.
+
+NVIM_SPAWN_OPTION_SCRATCH="[Scratch]"
+
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
 source_deps () {
@@ -547,6 +578,16 @@ gvim_open_files () {
     cursor_send="--remote-send '<ESC>:call cursor(${row_number}, ${col_number})<CR>'"
   fi
 
+  local scratch_cmd=""
+  if ! ${is_server_running} && [ $# -eq 0 ]; then
+    if [ "${NVIM_OPEN_FILE_ON_SPAWN}" = "${NVIM_SPAWN_OPTION_SCRATCH}" ]; then
+      # REFER: |scratch-buffer|, etc.
+      scratch_cmd="-c 'setlocal buftype=nofile bufhidden=wipe noswapfile nobuflisted'"
+    elif [ -n "${NVIM_OPEN_FILE_ON_SPAWN}" ]; then
+      set -- "${NVIM_OPEN_FILE_ON_SPAWN}"
+    fi
+  fi
+
   local vimrc_cmd=""
   if [ -n "${GVIM_OPEN_INIT_VIMRC}" ]; then
     vimrc_cmd="-u \"${GVIM_OPEN_INIT_VIMRC}\""
@@ -555,10 +596,10 @@ gvim_open_files () {
   if ! ${is_server_running} && ! is_editor_gvim; then
     # Start user's preferred Neovim GUI, e.g., Neovide.
     if [ "${NVIM_OPEN_APPNAME}" = "neovide" ]; then
-      eval "neovide -- --listen ${socket_path} ${vimrc_cmd} ${cursor_cmd} $@ & 2>/dev/null"
+      eval "neovide -- --listen ${socket_path} ${vimrc_cmd} ${cursor_cmd} ${scratch_cmd} $@ & 2>/dev/null"
     elif [ "${NVIM_OPEN_APPNAME}" = "nvim" ]; then
       # Run nvim in the terminal until user quits it.
-      eval "nvim --listen ${socket_path} ${vimrc_cmd} ${cursor_cmd} $@"
+      eval "nvim --listen ${socket_path} ${vimrc_cmd} ${cursor_cmd} ${scratch_cmd} $@"
 
       exit_0
     fi
