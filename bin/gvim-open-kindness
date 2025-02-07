@@ -203,16 +203,6 @@ gvim_open_kindness () {
   local is_server_running=true
   gvim_ensure_server_id_or_use_default "${server_id}"
 
-  # Fallback on a named file if the user doesn't specify a file to open,
-  # because a bare command, e.g., gvim --servername ${server_id}, opens
-  # a new gVim with the name "${server_id}1". Don't know why. (And does
-  # not have to be a reST file, I just have an empty README in my home.)
-  # MAYBE/2021-02-21: There's probably a way to open a new file to edit.
-  # TRYME/2022-10-13: What happens if the target file does not exist?
-  if [ -z "${1+x}" ]; then
-    set -- "${HOME}/README.rst"
-  fi
-
   gvim_relocate_cursor_to_editing_window "${server_arg}"
 
   gvim_open_files "${server_arg}" "${socket_path}" "${row_number}" "${col_number}" "$@"
@@ -412,15 +402,27 @@ gvim_ensure_server_id_or_use_default () {
   server_id="${server_id_arg}"
   socket_path=""
   server_arg=""
-  is_server_running=true
+  is_server_running=false
 
   if is_editor_gvim; then
     if [ -z "${server_id}" ]; then
       server_id="${GVIM_OPEN_SERVERNAME:-GVIM}"
     fi
     server_arg="--servername ${server_id}"
-    # We don't need to know if GVim instance running already or not.
-    is_server_running=true
+    # If user ran bare `gvim-open-kindness` without file paths, it matters
+    # if gvim already running or not:
+    # - `gvim --servername {}` *always* starts a new instance (e.g., MacVim);
+    #   and
+    # - `gvim --servername {} --remote-send ...` fails without at least one
+    #   path arg.
+    # - This `ps | grep` suss feels a little *V. Hacky*.
+    #   - It works with at least MacVim.
+    #     - SPIKE/2025-02-06: Verify on Linux.
+    # - On macOS, MacVim process output looks like:
+    #     .../MacVim.app/Contents/MacOS/Vim -f -g --servername GVIM --remote-silent file/path
+    if ps aux | grep -i -e "vim .*\--servername" | grep -v grep > /dev/null; then
+      is_server_running=true
+    fi
   else
     if [ -z "${server_id}" ]; then
       server_id="${NVIM_OPEN_SOCKETNAME:-NVIM}"
@@ -505,6 +507,25 @@ gvim_relocate_cursor_to_editing_window () {
 #   Vim(55518) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
 #   ...
 
+# BWARE: Don't run without a path argument.
+# - E.g., suppose an editor is alreaady running:
+#   - We can have it open a file with a command like this:
+#       nvim --server /tmp/nvim.socket-ALPHA --remote-silent ~/README.rst
+#   - But if we omit the path, it looks like nvim tries to start
+#     in the terminal, it spews some output, then dies with a
+#     message like this:
+#       Error executing lua: Vim:Error invoking 'nvim_command' on channel 3:
+#         Vim(drop):E471: Argument required: drop
+#           stack traceback:
+#             [C]: in function 'rpcrequest'
+#               vim/_editor.lua: in function <vim/_editor.lua:0>
+# - So skip this step unless opening files.
+#   - Though note that opening a file in MacVim fronts it, but
+#     `--remote-silent` requires a path argument. So if we don't
+#     have a path to open, we need to front MacVim differently
+#     (see gvim_bring_window_to_front) which currently requires
+#     an external tool (Hammerspoon, and Hammyspoony).
+
 gvim_open_files () {
   local server_arg="$1"
   local socket_path="$2"
@@ -555,18 +576,40 @@ gvim_open_files () {
     fi
 
     if is_editor_gvim; then
-      eval "$(gvim_procname) \
-        ${server_arg} \
-        ${cursor_arg} \
-        --remote-silent \
-        $(expand_paths "$@") \
-        2>/dev/null"
+      # Note that `--remote-silent` works whether or not the editor is
+      # already running (so long as it's followed by path arg(s)).
+      local remote_silent=""
+      if [ $# -gt 0 ]; then
+        remote_silent="--remote-silent"
+      fi
+
+      if [ $# -gt 0 ] || ! ${is_server_running}; then
+        eval "$(gvim_procname) \
+          ${server_arg} \
+          ${cursor_arg} \
+          ${scratch_cmd} \
+          ${remote_silent} \
+          $(expand_paths "$@") \
+          2>/dev/null"
+      else
+        eval "$(gvim_procname) \
+          ${server_arg} \
+          ${cursor_send} \
+          2>/dev/null"
+      fi
+      # else, not sending server an rpc comand, because no file(s) specified.
+      # - See next: gvim_bring_window_to_front will front the window.
+    # BWARE: Don't run without a path argument.
+    # - See comment above, before function.
     else
-      eval "$(gvim_procname) \
-        ${server_arg} \
-        --remote-silent \
-        $(expand_paths "$@") \
-        2>/dev/null"
+      if [ $# -gt 0 ]; then
+        # Send path args and cursor command to Neovim instance.
+        eval "$(gvim_procname) \
+          ${server_arg} \
+          --remote-silent \
+          $(expand_paths "$@") \
+          2>/dev/null"
+      fi
       if [ -n "${cursor_arg}" ]; then
         # Without the eval, opens file, but when user presses any key,
         # cursor jumps to command line which has `:call cursor(X, X)`
@@ -625,51 +668,63 @@ gvim_bring_window_to_front_X () {
   xdotool search --name "${server_id}" windowactivate > /dev/null 2>&1
 }
   
-# REFER: Requires Hammyspoony Hammerspoon Spoon to front nvim TUI:
+# REFER: Requires Hammyspoony Hammerspoon Spoon to front nvim TUI,
+# or when more than one Neovide or GUI instance running:
 #
 #   https://github.com/DepoXy/macOS-Hammyspoony#🥄
 
 gvim_bring_window_to_front_macOS () {
   local server_id="$1"
 
-  if ! ${is_server_running} || is_editor_gvim; then
+  if ! ${is_server_running}; then
+    # Was fronted when the editor was started (and either
+    # the GUI launched, or (n)vim was started in the terminal).
 
     return 0
   fi
 
-  if is_editor_gvim; then
-    # MacVim fronts itself.
-    # - If you have another use case (e.g., terminal Vim),
-    #   add it here (e.g., call hammerspoon://setFrontmost).
-    :
+  local is_single_gui_instance=false
+
+  # MacVim fronts itself when you --remote-send it files to open,
+  # but if there are no files (bare gvim-open-kindness, and MacVim
+  # already running), then we need to front it here.
+  #
+  # For Neovide, `open -a neovide` works if there's only one instance,
+  # otherwise we need to find and front it using its server ID.
+  #
+  # Likewise if running in the terminal, we need to find the window by
+  # looking for the server ID.
+  #
+  # - MAYBE: The rest of this fcn. could be simplified to the
+  #   last `open -g hammerspoon://setFrontmost` call.
+  #   - The only difference is `open -a neovide` if there's only
+  #     one neovide running, to support folx without Hammyspoony.
+
+  if ! is_editor_gvim && [ "${NVIM_OPEN_APPNAME}" != "nvim" ]; then
+    local n_instances
+    n_instances="$(ps aux | grep -e "${NVIM_OPEN_APPNAME}" | grep -v grep | wc -l)"
+
+    if [ ${n_instances} -eq 1 ]; then
+      # E.g., just 1 "neovide" instance.
+      is_single_gui_instance=true
+    fi
+    # else, there's no reason not to always call hammerspoon://setFrontmost —
+    # and to never call `open -a` — but at least the `open -a` branch works
+    # if the user is not running Hammyspoony.
+  fi
+  # else, running (n)vim in terminal, or running MacVim, in which case we
+  # need to use setFrontmost to find the window by name — which depends on
+  # user's (Neo)vim showing the server ID in the window title.
+
+  if ${is_single_gui_instance}; then
+    # E.g., "neovide"
+    open -a "${NVIM_OPEN_APPNAME}" \
+      || true
   else
-    local is_single_gui_instance=false
-
-    if [ "${NVIM_OPEN_APPNAME}" != "nvim" ]; then
-      local n_instances
-      n_instances="$(ps aux | grep -e "${NVIM_OPEN_APPNAME}" | grep -v grep | wc -l)"
-
-      if [ ${n_instances} -eq 1 ]; then
-        # E.g., just 1 "neovide" instance.
-        is_single_gui_instance=true
-      fi
-      # else, there's no reason not to always call hammerspoon://setFrontmost —
-      # and to never call `open -a` — but at least the `open -a` branch works
-      # if the user is not running Hammyspoony.
-    fi
-    # else, running nvim in terminal, in which case we need to use setFrontmost
-    # to find the window by name — which depends on user's (Neo)vim showing the
-    # server ID in the window title.
-
-    if ${is_single_gui_instance}; then
-      # E.g., "neovide"
-      open -a "${NVIM_OPEN_APPNAME}" \
-        || true
-    else
-      open -g "hammerspoon://setFrontmost?name=${server_id}" \
-        2> /dev/null \
-        || true
-    fi
+    # FIXME/2025-02-06: When empty string, fronts what was hidden Activity Monitor.
+    open -g "hammerspoon://setFrontmost?name=${server_id}" \
+      2> /dev/null \
+      || true
   fi
 }
 
