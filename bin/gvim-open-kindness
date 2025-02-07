@@ -642,14 +642,34 @@ gvim_bring_window_to_front_macOS () {
     # - If you have another use case (e.g., terminal Vim),
     #   add it here (e.g., call hammerspoon://setFrontmost).
     :
-  elif [ "${NVIM_OPEN_APPNAME}" = "nvim" ]; then
-    open -g "hammerspoon://setFrontmost?name=${server_id}" \
-      2> /dev/null \
-      || true
   else
-    # E.g., "neovide"
-    open -a "${NVIM_OPEN_APPNAME}" \
-      || true
+    local is_single_gui_instance=false
+
+    if [ "${NVIM_OPEN_APPNAME}" != "nvim" ]; then
+      local n_instances
+      n_instances="$(ps aux | grep -e "${NVIM_OPEN_APPNAME}" | grep -v grep | wc -l)"
+
+      if [ ${n_instances} -eq 1 ]; then
+        # E.g., just 1 "neovide" instance.
+        is_single_gui_instance=true
+      fi
+      # else, there's no reason not to always call hammerspoon://setFrontmost —
+      # and to never call `open -a` — but at least the `open -a` branch works
+      # if the user is not running Hammyspoony.
+    fi
+    # else, running nvim in terminal, in which case we need to use setFrontmost
+    # to find the window by name — which depends on user's (Neo)vim showing the
+    # server ID in the window title.
+
+    if ${is_single_gui_instance}; then
+      # E.g., "neovide"
+      open -a "${NVIM_OPEN_APPNAME}" \
+        || true
+    else
+      open -g "hammerspoon://setFrontmost?name=${server_id}" \
+        2> /dev/null \
+        || true
+    fi
   fi
 }
 
