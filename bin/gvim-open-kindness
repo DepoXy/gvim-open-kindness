@@ -520,7 +520,9 @@ gvim_open_files () {
   local cursor_cmd=""
   local cursor_send=""
   if [ -n "${row_number}" ] && [ -n "${col_number}" ]; then
+    # The cursor_cmd applies to new instances.
     cursor_cmd="-c 'call cursor(${row_number}, ${col_number})'"
+    # The cursor_send applies to existing instances.
     cursor_send="--remote-send '<ESC>:call cursor(${row_number}, ${col_number})<CR>'"
   fi
 
@@ -530,13 +532,12 @@ gvim_open_files () {
   fi
 
   if ! ${is_server_running} && ! is_editor_gvim; then
-    # Editor not running, and editor not GVim.
-    # - Run user's preferred GUI, e.g., Neovide.
+    # Start user's preferred Neovim GUI, e.g., Neovide.
     if [ "${NVIM_OPEN_APPNAME}" = "neovide" ]; then
       eval "neovide -- --listen ${socket_path} ${vimrc_cmd} ${cursor_cmd} $@ & 2>/dev/null"
     elif [ "${NVIM_OPEN_APPNAME}" = "nvim" ]; then
+      # Run nvim in the terminal until user quits it.
       eval "nvim --listen ${socket_path} ${vimrc_cmd} ${cursor_cmd} $@"
-      # Run until user quits nvim.
 
       exit_0
     fi
