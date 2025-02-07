@@ -94,7 +94,7 @@ NVIM_OPEN_SOCKETNAME="${NVIM_OPEN_SOCKETNAME:-NVIM}"
 #   script calls `open -a {app}` to ensure the chosen editor is fronted.
 #   - Or if nvim is target app, then this script uses hammerspoon:// URI;
 #     see previous comment.
-# - CHOOS: Some nvim TUIs or GUIs you might entertain:
+# - UPICK: Some nvim TUIs or GUIs you might entertain:
 #   - Neovim  — https://neovim.io/  # Neovim itself, in a terminal
 #   - Neovide — https://neovide.dev
 #   - VimR    — https://github.com/qvacua/vimr
