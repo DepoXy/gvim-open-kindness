@@ -664,12 +664,16 @@ gvim_open_files () {
   fi
 }
 
-# Handles any path characters except double quote.
+# Returns a list of path arguments to use in an `eval`.
+# - Resolve paths (open canonical file, not symlink path); escapes any
+#   double-quotes in the file path (an edge case), double-quote the result,
+#   and convert the newline to a space.
 expand_paths () {
   for path in "$@"; do
     printf "${path}\0"
   done \
     | xargs -0 realpath \
+    | $(command -v gsed || command -v sed) 's/"/\\"/g' \
     | $(command -v gsed || command -v sed) 's/^\(.*\)$/"\1"/' \
     | tr "\n" " "
 }
