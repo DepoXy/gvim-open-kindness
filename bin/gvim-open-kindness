@@ -673,7 +673,7 @@ expand_paths () {
   for path in "$@"; do
     printf "${path}\0"
   done \
-    | xargs -I{} -0 sh -c 'realpath {} 2> /dev/null || echo "{}"' \
+    | xargs -I{} -0 sh -c 'realpath -- "{}" 2> /dev/null || echo "{}"' \
     | $(command -v gsed || command -v sed) 's/"/\\"/g' \
     | $(command -v gsed || command -v sed) 's/^\(.*\)$/"\1"/' \
     | tr "\n" " "
