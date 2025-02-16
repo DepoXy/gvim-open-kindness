@@ -168,6 +168,14 @@ because this script calls an `autoload#` function:
 
   This script pairs well with `rg` and `tag`.
 
+## RELATED PROJECTS
+
+- *Open a local file from a URL at a line number in an editor/IDE*
+
+  (From the author of [`git-delta`](https://github.com/dandavison/delta).)
+
+  https://github.com/dandavison/open-in-editor
+
 ## AUTHOR
 
 **gvim-open-kindness** is Copyright (c) 2021-2025 Landon Bouma &lt;depoxy@tallybark.com&gt;
