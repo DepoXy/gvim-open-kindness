@@ -107,6 +107,15 @@ NVIM_OPEN_SOCKETNAME="${NVIM_OPEN_SOCKETNAME:-NVIM}"
 
 NVIM_OPEN_APPNAME="${NVIM_OPEN_APPNAME:-nvim}"
 
+# USAGE: When starting new instance, use specific `.../bin/nvim` path.
+# - If unset, uses `nvim` on PATH.
+# - This settings applies to either terminal nvim or Neovide.
+# - REFER: From `neovide --help`:
+#     --neovim-bin <NEOVIM_BIN>
+#       ... env: NEOVIM_BIN=/opt/homebrew/bin/nvim
+
+NEOVIM_BIN="${NEOVIM_BIN}"
+
 # USAGE: Enable always running GVim or Neovim.
 # - Set one of these environs to always use gvim or nvim, regardless of $0.
 # - If both are 'true', this scripts uses nvim.
@@ -319,6 +328,10 @@ must_locate_executable_or_notify_and_exit () {
     fi
 
     must_verify_command "${NVIM_OPEN_APPNAME}"
+
+    if [ -n "${NEOVIM_BIN}" ]; then
+      must_verify_command "${NEOVIM_BIN}"
+    fi
   fi
 }
 
@@ -596,10 +609,15 @@ gvim_open_files () {
   if ! ${is_server_running} && ! is_editor_gvim; then
     # Start user's preferred Neovim GUI, e.g., Neovide.
     if [ "${NVIM_OPEN_APPNAME}" = "neovide" ]; then
-      eval "neovide -- --listen ${socket_path} ${vimrc_cmd} ${cursor_cmd} ${scratch_cmd} $@ & 2>/dev/null"
+      # DUNNO: Doesn't work: `NEOVIM_BIN=.../path/to/nvim neovide ...`
+      local neovim_bin=""
+      if [ -n "${NEOVIM_BIN}" ]; then
+        neovim_bin="--neovim-bin \"${NEOVIM_BIN}\""
+      fi
+      eval "neovide ${neovim_bin} -- --listen ${socket_path} ${vimrc_cmd} ${cursor_cmd} ${scratch_cmd} $@ & 2>/dev/null"
     elif [ "${NVIM_OPEN_APPNAME}" = "nvim" ]; then
       # Run nvim in the terminal until user quits it.
-      eval "nvim --listen ${socket_path} ${vimrc_cmd} ${cursor_cmd} ${scratch_cmd} $@"
+      eval "${NEOVIM_BIN:-nvim} --listen ${socket_path} ${vimrc_cmd} ${cursor_cmd} ${scratch_cmd} $@"
 
       exit_0
     fi
