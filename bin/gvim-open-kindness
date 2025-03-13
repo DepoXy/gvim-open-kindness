@@ -9,7 +9,7 @@
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
 # This usage is not actually displayed.
-gvim_open_kindness_print_usage () {
+gvim_open_kindness_print_usage() {
   echo 'USAGE: `gvim-open-kindness` <servername> <line> <column> <path>...'
   echo '       `nvim-open-kindness` <socketname> <line> <column> <path>...'
 }
@@ -163,11 +163,11 @@ NVIM_SPAWN_OPTION_SCRATCH="[Scratch]"
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
-source_deps () {
+source_deps() {
   source_dep_homebrew
 }
 
-source_dep_homebrew () {
+source_dep_homebrew() {
   [ -n "${HOMEBREW_PREFIX}" ] || return 0
 
   local brew_path="$(print_homebrew_path)"
@@ -181,7 +181,7 @@ source_dep_homebrew () {
 #   https://github.com/DepoXy/depoxy#🍯
 #     ~/.depoxy/ambers/core/brewskies.sh
 #   https://github.com/DepoXy/depoxy/tree/HEAD/core/brewskies.sh
-print_homebrew_path () {
+print_homebrew_path() {
   local brew_path=""
 
   # On Apple Silicon (arm64/AArch64) Macs (M1, M2, etc.) it's /opt/homebrew
@@ -206,7 +206,7 @@ print_homebrew_path () {
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
-gvim_open_kindness () {
+gvim_open_kindness() {
   local server_id
   local row_number
   local col_number
@@ -229,9 +229,18 @@ gvim_open_kindness () {
   #       alias fs="gvim-open-kindness '' '' ''"
   #       # Use `fa` to edit file(s) in a seperate editor instance.
   #       alias fa="gvim-open-kindness '🐬' '' ''"
-  if [ -n "${1+x}" ] && [ "$1" != "--" ]; then server_id="$1"; shift; fi
-  if [ -n "${1+x}" ] && [ "$1" != "--" ]; then row_number="$1"; shift; fi
-  if [ -n "${1+x}" ] && [ "$1" != "--" ]; then col_number="$1"; shift; fi
+  if [ -n "${1+x}" ] && [ "$1" != "--" ]; then
+    server_id="$1"
+    shift
+  fi
+  if [ -n "${1+x}" ] && [ "$1" != "--" ]; then
+    row_number="$1"
+    shift
+  fi
+  if [ -n "${1+x}" ] && [ "$1" != "--" ]; then
+    col_number="$1"
+    shift
+  fi
   if [ "$1" = "--" ]; then shift; fi
 
   adjust_gvim_or_nvim_per_user_pref_environ
@@ -255,7 +264,7 @@ gvim_open_kindness () {
 # This script picked GVIM or NVIM based on executable user ran
 # (`gvim-open-kindness` vs. `nvim-open-kindness`) but user can
 # override/force a preference using GVIM_OPEN_PREFER_* environ.
-adjust_gvim_or_nvim_per_user_pref_environ () {
+adjust_gvim_or_nvim_per_user_pref_environ() {
   if ${GVIM_OPEN_PREFER_GVIM:-false}; then
     GVIM_OPEN_EDITOR="GVIM"
   fi
@@ -265,11 +274,11 @@ adjust_gvim_or_nvim_per_user_pref_environ () {
   fi
 }
 
-is_editor_gvim () {
+is_editor_gvim() {
   test "${GVIM_OPEN_EDITOR:-GVIM}" = "GVIM"
 }
 
-gvim_procname () {
+gvim_procname() {
   if is_editor_gvim; then
     # Runs MacVim on macOS.
     printf "%s" "gvim"
@@ -298,7 +307,7 @@ gvim_procname () {
 #     /home/user/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:
 #       /usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin
 
-must_locate_executable_or_notify_and_exit () {
+must_locate_executable_or_notify_and_exit() {
   PATH="/usr/local/bin:${PATH}"
 
   # Aka ${HOMEBREW_PREFIX}
@@ -320,7 +329,8 @@ must_locate_executable_or_notify_and_exit () {
   if ! is_editor_gvim; then
     if [ "${NVIM_OPEN_APPNAME}" != "neovide" ] \
       && [ "${NVIM_OPEN_APPNAME}" != "nvim" ] \
-    ; then
+      ; then
+
       # USAGE: Add new editor support to gvim_open_files, below.
       >&2 echo "ERROR: Unrecognized Neovim app: ${NVIM_OPEN_APPNAME}"
 
@@ -335,7 +345,7 @@ must_locate_executable_or_notify_and_exit () {
   fi
 }
 
-must_verify_command () {
+must_verify_command() {
   local cmd="$1"
 
   if ! type "${cmd}" > /dev/null 2>&1; then
@@ -371,7 +381,7 @@ must_verify_command () {
 #       /var/folders/cs/h762zc8951zdm1ycc_2zqwb9l60wrb/T
 #
 #       @macOS $ echo $TMPDIR
-#       /var/folders/cs/h762zc8951zdm1ycc_2zqwb9l60wrb/T/      
+#       /var/folders/cs/h762zc8951zdm1ycc_2zqwb9l60wrb/T/
 #
 #     But there's still a /tmp directory nonetheless:
 #
@@ -394,8 +404,8 @@ must_verify_command () {
 #
 #     notify-send "PATH=$(expr substr "${PATH}" 1 200)"
 
-stderr_or_desktop_notify () {
-  stdout_isatty () { [ -t 1 ]; }
+stderr_or_desktop_notify() {
+  stdout_isatty() { [ -t 1 ]; }
 
   if stdout_isatty; then
     >&2 echo "ERROR: $@"
@@ -404,7 +414,7 @@ stderr_or_desktop_notify () {
   fi
 }
 
-desktop_notify () {
+desktop_notify() {
   local summary="$1"
   local body="$2"
 
@@ -440,7 +450,7 @@ desktop_notify () {
 #  local server_arg
 #  local socket_path
 #  local is_server_running
-gvim_ensure_server_id_or_use_default () {
+gvim_ensure_server_id_or_use_default() {
   local server_id_arg="$1"
 
   server_id="${server_id_arg}"
@@ -499,9 +509,9 @@ gvim_ensure_server_id_or_use_default () {
 #   E247: no registered server named "GVIM": Send failed.
 # so toss the stderr stream.
 #
-# Finally, use `silent!` to ignore error if autoload/ fcn. absent. 
+# Finally, use `silent!` to ignore error if autoload/ fcn. absent.
 
-gvim_relocate_cursor_to_editing_window () {
+gvim_relocate_cursor_to_editing_window() {
   local server_arg="$1"
 
   if ! ${is_server_running}; then
@@ -570,7 +580,7 @@ gvim_relocate_cursor_to_editing_window () {
 #     (see gvim_bring_window_to_front) which currently requires
 #     an external tool (Hammerspoon, and Hammyspoony).
 
-gvim_open_files () {
+gvim_open_files() {
   local server_arg="$1"
   local socket_path="$2"
   local row_number="$3"
@@ -687,7 +697,7 @@ gvim_open_files () {
 #   back on the unaltered path if absent; escapes any double-quotes
 #   in the file path (an edge case), double-quote the result, and
 #   convert the newline to a space.
-expand_paths () {
+expand_paths() {
   for path in "$@"; do
     printf "${path}\0"
   done \
@@ -708,18 +718,18 @@ expand_paths () {
 # FTREQ/2025-01-25: Add Wayland path.
 # - For now, xdotool may work if GVim uses Xwayland.
 
-gvim_bring_window_to_front () {
+gvim_bring_window_to_front() {
   if ! os_is_macos; then
     gvim_bring_window_to_front_X "$@"
   else
     gvim_bring_window_to_front_macOS "$@"
   fi
 }
-  
-gvim_bring_window_to_front_X () {
+
+gvim_bring_window_to_front_X() {
   local server_id="$1"
 
-  if ! command -v xdotool >/dev/null; then
+  if ! command -v xdotool > /dev/null; then
 
     return 0
   fi
@@ -731,13 +741,13 @@ gvim_bring_window_to_front_X () {
   #   but it works nonetheless, so chuck the error.
   xdotool search --name "${server_id}" windowactivate > /dev/null 2>&1
 }
-  
+
 # REFER: Requires Hammyspoony Hammerspoon Spoon to front nvim TUI,
 # or when more than one Neovide or GUI instance running:
 #
 #   https://github.com/DepoXy/macOS-Hammyspoony#🥄
 
-gvim_bring_window_to_front_macOS () {
+gvim_bring_window_to_front_macOS() {
   local server_id="$1"
 
   if ! ${is_server_running}; then
@@ -796,34 +806,34 @@ gvim_bring_window_to_front_macOS () {
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
-os_is_macos () {
+os_is_macos() {
   [ "$(uname)" = "Darwin" ]
 }
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
-clear_traps () {
+clear_traps() {
   trap - EXIT INT
 }
 
-set_traps () {
+set_traps() {
   trap -- trap_exit EXIT
   trap -- trap_int INT
 }
 
-exit_0 () {
+exit_0() {
   clear_traps
 
   exit 0
 }
 
-exit_1 () {
+exit_1() {
   clear_traps
 
   exit 1
 }
 
-trap_exit () {
+trap_exit() {
   clear_traps
 
   # USAGE: Alert on unexpected error path, so you can add happy path.
@@ -833,7 +843,7 @@ trap_exit () {
   exit 2
 }
 
-trap_int () {
+trap_int() {
   clear_traps
 
   exit 3
@@ -844,7 +854,7 @@ trap_int () {
 SCRIPT_NAME_GVIM="gvim-open-kindness"
 SCRIPT_NAME_NVIM="nvim-open-kindness"
 
-main () {
+main() {
   local proc_bname
   proc_bname="$(basename -- "$0")"
 
@@ -881,4 +891,3 @@ main () {
 }
 
 main "$@"
-
