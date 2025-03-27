@@ -541,9 +541,13 @@ gvim_relocate_cursor_to_editing_window() {
   #         to this dilemma at all. You cannot use gvim-open-kindness and remain
   #         in Insert mode =(.
 
+  # REFER: |startup-options| except doesn't mention anything about --remote-send.
+  # - See |--remote-send| instead, and |CTRL-\_CTRL-N| which goes to Normal mode
+  #   from any mode, "without causing a beep like <Esc> would."
+  #
   $(gvim_procname) \
     ${server_arg} \
-    --remote-send "<ESC>:silent! call g:embrace#windows#FocusCursorInNormalBufferWindow()<CR>" \
+    --remote-send "<C-\><C-N>:silent! call g:embrace#windows#FocusCursorInNormalBufferWindow()<CR>" \
     > /dev/null 2>&1 \
     || is_server_running=false
 }
