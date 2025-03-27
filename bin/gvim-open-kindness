@@ -545,6 +545,11 @@ gvim_relocate_cursor_to_editing_window() {
   # - See |--remote-send| instead, and |CTRL-\_CTRL-N| which goes to Normal mode
   #   from any mode, "without causing a beep like <Esc> would."
   #
+  # OWELL: Note the --remote-send command is written to the cmdline quickly, and
+  # may or may not be noticeable to the user (with Noice running, in LazyVim, in
+  # Neovim, in Neovide, author sees the cmdline quickly blip, very, very fast; a
+  # little annoying, but doesn't appear you can squelch --remote-send).
+
   $(gvim_procname) \
     ${server_arg} \
     --remote-send "<C-\><C-N>:silent! call g:embrace#windows#FocusCursorInNormalBufferWindow()<CR>" \
