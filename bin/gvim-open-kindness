@@ -706,11 +706,13 @@ gvim_open_files() {
 #   back on the unaltered path if absent; escapes any double-quotes
 #   in the file path (an edge case), double-quote the result, and
 #   convert the newline to a space.
+# REFER: |man xargs|
+# - -S replsize — space (bytes) -I can use for replacements. Defaults 255.
 expand_paths() {
   for path in "$@"; do
     printf "${path}\0"
   done \
-    | xargs -I{} -0 sh -c 'realpath -- "{}" 2> /dev/null || echo "{}"' \
+    | xargs -I{} -S1024 -0 sh -c 'realpath -- "{}" 2> /dev/null || echo "{}"' \
     | $(command -v gsed || command -v sed) 's/"/\\"/g' \
     | $(command -v gsed || command -v sed) 's/^\(.*\)$/"\1"/' \
     | tr "\n" " "
