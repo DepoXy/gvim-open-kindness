@@ -474,7 +474,7 @@ gvim_ensure_server_id_or_use_default() {
     #     - SPIKE/2025-02-06: Verify on Linux.
     # - On macOS, MacVim process output looks like:
     #     .../MacVim.app/Contents/MacOS/Vim -f -g --servername GVIM --remote-silent file/path
-    if ps aux | grep -i -e "vim .*\--servername" | grep -v grep > /dev/null; then
+    if ps aux | grep -i -e "vim .*\--servername ${server_id}" | grep -v grep > /dev/null; then
       is_server_running=true
     fi
   else
