@@ -27,11 +27,11 @@ gvim-open-kindness — Kindly file opener that positions your cursor 🐬
   The `servername` or `socketname` should be a simple alpha-numeric-emoji
   string (i.e., avoid using spaces and path separators).
 
-  You can use different server and socket names to open files
-  in different editor instances.
+You can use different server and socket names to open files
+in different editor instances.
 
-  - On GVim, you'll also see the ``--servername`` in the
-    GVim titlebar, so you might enjoy customizing it.
+* On GVim, you'll also see the ``--servername`` in the
+  GVim titlebar, so you might enjoy customizing it.
 
   You can also define environs to use as defaults if the server or
   socket name is not specified as a command argument:
@@ -42,36 +42,36 @@ gvim-open-kindness — Kindly file opener that positions your cursor 🐬
 
 ## NEOVIM CHOOSER
 
-  Call `nvim-open-kindess` to open files in Neovim.
+Call `nvim-open-kindess` to open files in Neovim.
 
-  If the specified Neovim server is not running, the script starts
-  a new editor process.
+If the specified Neovim server is not running, the script starts
+a new editor process.
 
-  The editor it starts can be customized using an environ variable,
-  and defaults to running `nvim` in the console:
+The editor it starts can be customized using an environ variable,
+and defaults to running `nvim` in the console:
 
     export NVIM_OPEN_APPNAME="nvim"
 
-  You might also prefer to run a GUI app, such as
-  [Neovide](https://github.com/neovide/neovide):
+You might also prefer to run a GUI app, such as
+[Neovide](https://github.com/neovide/neovide):
 
     export NVIM_OPEN_APPNAME="neovide"
 
 ## EXAMPLES
 
-  Open this README and position the cursor on line 31, column 39,
-  using the default `--servername` specified by `GVIM_OPEN_SERVERNAME`:
+Open this README and position the cursor on line 31, column 39,
+using the default `--servername` specified by `GVIM_OPEN_SERVERNAME`:
 
-    $ cd path/to/gvim-open-kindness
-    $ bin/gvim-open-kindness "" "31" "39" "README.md"
+    cd path/to/gvim-open-kindness
+    bin/gvim-open-kindness "" "31" "39" "README.md"
 
-  Open the same, but send to the GVim named "my-other-gvim":
+Open the same, but send to the GVim named "my-other-gvim":
 
-    $ bin/gvim-open-kindness "my-other-gvim" "31" "39" "README.md"
+    bin/gvim-open-kindness "my-other-gvim" "31" "39" "README.md"
 
-  Likewise, but specifying the server name with an environ:
+Likewise, but specifying the server name with an environ:
 
-    $ GVIM_OPEN_SERVERNAME="my-other-gvim" bin/gvim-open-kindness "" "31" "39" "README.md"
+    GVIM_OPEN_SERVERNAME="my-other-gvim" bin/gvim-open-kindness "" "31" "39" "README.md"
 
 ## INSTALL
 
@@ -82,8 +82,8 @@ gvim-open-kindness — Kindly file opener that positions your cursor 🐬
       "/full/path/to/gvim-open-kindness/bin/gvim-open-kindness" \
       "${HOME}/.local/bin/gvim-open-kindness"
 
-  If you want to open files in Neovim instead of GVim, call
-  the script using its pseudonym, `nvim-open-kindness`:
+If you want to open files in Neovim instead of GVim, call
+the script using its pseudonym, `nvim-open-kindness`:
 
     ln -sfn \
       "/full/path/to/gvim-open-kindness/bin/gvim-open-kindness" \
@@ -91,21 +91,21 @@ gvim-open-kindness — Kindly file opener that positions your cursor 🐬
 
 ## OPTIONAL NOTIFICATION
 
-  If you'd like a popup notification if there's an error:
+If you'd like a popup notification if there's an error:
 
-  - On macOS, ensure `terminal-notifier` is available:
+* On macOS, ensure `terminal-notifier` is available:
 
-      `brew install terminal-notifier`
+    `brew install terminal-notifier`
 
-  - On Linux, ensure `notify-send` is available:
+* On Linux, ensure `notify-send` is available:
 
-      `sudo apt install libnotify-bin`
+    `sudo apt install libnotify-bin`
 
-  Otherwise errors are sent to a temp file.
+Otherwise errors are sent to a temp file.
 
-  - This is so you can wire `gvim-open-kindness` from an OS-level
-    keybinding (e.g., using Hammerspoon, or Karabiner-Elements)
-    and still be able to diagnose errors.
+* This is so you can wire `gvim-open-kindness` from an OS-level
+  keybinding (e.g., using Hammerspoon, or Karabiner-Elements)
+  and still be able to diagnose errors.
 
 ## OPTIONAL DEPENDENCIES
 
@@ -121,18 +121,18 @@ If you'd like to find and front the Vim app when you
 send it a file to open, install the `URISetFrontmost`
 Hammerspoon Spoon:
 
-https://github.com/DepoXy/macOS-Hammyspoony/blob/release/Source/URISetFrontmost.spoon/init.lua
+<https://github.com/DepoXy/macOS-Hammyspoony/blob/release/Source/URISetFrontmost.spoon/init.lua>
 
 found in this script's author's *HammySpoony* project:
 
-https://github.com/DepoXy/macOS-Hammyspoony 🥄
+<https://github.com/DepoXy/macOS-Hammyspoony> 🥄
 
 You'll also need to print the `v:servername` value in the
 titlebar, using `set title titlestring=...`, which you'll
 find in this Vim plugin that also adds the T.O.D. to the
 window title:
 
-https://github.com/landonb/vim-title-bar-time-of-day 🕰️
+<https://github.com/landonb/vim-title-bar-time-of-day> 🕰️
 
 The Hammerspoon mechanism finds and fronts any window
 with the given server name, so ensure that
@@ -150,7 +150,7 @@ window, e.g., the quickfix window, a help window, a `:netrw`
 window, etc., install the `embrace-vim/vim-buffer-delights`
 Vim plugin:
 
-https://github.com/embrace-vim/vim-buffer-delights 🍧
+<https://github.com/embrace-vim/vim-buffer-delights> 🍧
 
 If that plugin is not installed, `gvim-open-kindness` will still
 work, but the file will be opened in whatever window has focus,
@@ -166,23 +166,22 @@ because this script calls an `autoload#` function:
 
 ## USE CASES
 
-  This script pairs well with `rg` and `tag`.
+This script pairs well with `rg` and `tag`.
 
 ## RELATED PROJECTS
 
-- *Open a local file from a URL at a line number in an editor/IDE*
+* *Open a local file from a URL at a line number in an editor/IDE*
 
   (From the author of [`git-delta`](https://github.com/dandavison/delta).)
 
-  https://github.com/dandavison/open-in-editor
+  <https://github.com/dandavison/open-in-editor>
 
 ## AUTHOR
 
-**gvim-open-kindness** is Copyright (c) 2021-2025 Landon Bouma &lt;depoxy@tallybark.com&gt;
+**gvim-open-kindness** is Copyright (c) 2021-2025 Landon Bouma &lt;<depoxy@tallybark.com>&gt;
 
 This software is released under the MIT license (see `LICENSE` file for more)
 
 ## REPORTING BUGS
 
-&lt;https://github.com/DepoXy/gvim-open-kindness/issues&gt;
-
+&lt;<https://github.com/DepoXy/gvim-open-kindness/issues>&gt;
