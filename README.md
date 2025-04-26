@@ -3,29 +3,31 @@ gvim-open-kindness — Kindly file opener that positions your cursor 🐬
 
 ## SYNOPSIS
 
-`gvim-open-kindness` &lt;servername&gt; &lt;line&gt; &lt;column&gt; &lt;path&gt;...
+Open in Neovim or Neovim GUI (e.g., Neovide):
 
-*(Now with Neovim support! —2025-01-25):*
+    nvim-open-kindness <socketname> <line> <column> <path> [<path>...]
 
-`nvim-open-kindness` &lt;socketname&gt; &lt;line&gt; &lt;column&gt; &lt;path&gt;...
+Open in GVim (Vim GUI):
+
+    gvim-open-kindness <servername> <line> <column> <path> [<path>...]
 
 ## DESCRIPTION
 
-  Opens `<path>` in the GVim or Neovim instance identified by `<servername>`
-  or `<socketname>` and positions the cursor at row `<line>` and column
-  `<column>`.
+Opens `<path>` in the Neovim or GVim instance identified by `<socketname>`
+or `<servername>` and positions the cursor at row `<line>` and column
+`<column>`.
 
 ## ENVIRONS
 
-  You can use an environ instead to specify the `<servername>`
-  or `<socketname>`
+You can use an environ instead to specify the `<socketname>`
+or `<servername>`
 
-  - The server name is used for GVim, e.g., `gvim --servername <servername>`
+* The socket name is used for Neovim, e.g., `nvim --server /tmp/nvim.socket-<socketname>`
 
-  - The socket name is used for Neovim, e.g., `nvim --server /tmp/nvim.socket-<socketname>`
+* The server name is used for GVim, e.g., `gvim --servername <servername>`
 
-  The `servername` or `socketname` should be a simple alpha-numeric-emoji
-  string (i.e., avoid using spaces and path separators).
+The `socketname` or `servername` should be a simple alpha-numeric-emoji
+string (i.e., avoid using spaces and path separators).
 
 You can use different server and socket names to open files
 in different editor instances.
@@ -33,12 +35,17 @@ in different editor instances.
 * On GVim, you'll also see the ``--servername`` in the
   GVim titlebar, so you might enjoy customizing it.
 
-  You can also define environs to use as defaults if the server or
-  socket name is not specified as a command argument:
+* You can easily add the socket name to Neovim using the
+  [`vim-title-bar-time-of-day`][vim-title-bar-time-of-day] plugin.
+
+You can also define environs to use as defaults if the server or
+socket name is not specified as a command argument:
+
+    export NVIM_OPEN_SOCKETNAME="NVIM"
 
     export GVIM_OPEN_SERVERNAME="GVIM"
 
-    export NVIM_OPEN_SOCKETNAME="NVIM"
+[vim-title-bar-time-of-day]: https://github.com/landonb/vim-title-bar-time-of-day
 
 ## NEOVIM CHOOSER
 
@@ -75,8 +82,9 @@ Likewise, but specifying the server name with an environ:
 
 ## INSTALL
 
-  Many users will be able to symlink `gvim-open-kindness` from
-  user-local-bin to call it without using its full path, e.g.,:
+Many users will be able to symlink `gvim-open-kindness` from
+user-local-bin to call it without using its full path, e.g.,
+if `~/.local/bin` is on `PATH`, you can run:
 
     ln -sfn \
       "/full/path/to/gvim-open-kindness/bin/gvim-open-kindness" \
@@ -128,17 +136,17 @@ found in this script's author's *HammySpoony* project:
 <https://github.com/DepoXy/macOS-Hammyspoony> 🥄
 
 You'll also need to print the `v:servername` value in the
-titlebar, using `set title titlestring=...`, which you'll
-find in this Vim plugin that also adds the T.O.D. to the
-window title:
+titlebar, using `set title titlestring=...`. Or, you can
+install the following (Neo)Vim plugin (which also adds the
+time of day to the window title):
 
 <https://github.com/landonb/vim-title-bar-time-of-day> 🕰️
 
 The Hammerspoon mechanism finds and fronts any window
 with the given server name, so ensure that
 `GVIM_OPEN_SERVERNAME` and/or `NVIM_OPEN_SOCKETNAME`
-are unique (and don't, e.g., conflict with any browser
-window titles).
+are unique (and won't match any other window title — you
+might consider using an emoji character to make it unique).
 
 ### Vim nice open plugin — `vim-buffer-delights`
 
