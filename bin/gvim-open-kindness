@@ -653,26 +653,23 @@ gvim_open_files() {
       cursor_arg="${cursor_send}"
     fi
 
+    local paths="$(expand_paths "$@")"
+
     if is_editor_gvim; then
       # Note that `--remote-silent` works whether or not the editor is
       # already running (so long as it's followed by path arg(s)).
       local remote_silent=""
-      if [ $# -gt 0 ]; then
+      if [ -n "${paths}" ]; then
         remote_silent="--remote-silent"
       fi
 
-      if [ $# -gt 0 ] || ! ${is_server_running}; then
+      if [ -n "${paths}" ] || ! ${is_server_running}; then
         eval "$(gvim_procname) \
           ${server_arg} \
           ${cursor_arg} \
           ${scratch_cmd} \
           ${remote_silent} \
-          $(expand_paths "$@") \
-          2>/dev/null"
-      else
-        eval "$(gvim_procname) \
-          ${server_arg} \
-          ${cursor_send} \
+          ${paths} \
           2>/dev/null"
       fi
       # else, not sending server an rpc comand, because no file(s) specified.
@@ -680,12 +677,12 @@ gvim_open_files() {
     # BWARE: Don't run without a path argument.
     # - See comment above, before function.
     else
-      if [ $# -gt 0 ]; then
+      if [ -n "${paths}" ]; then
         # Send path args and cursor command to Neovim instance.
         eval "$(gvim_procname) \
           ${server_arg} \
           --remote-silent \
-          $(expand_paths "$@") \
+          ${paths} \
           2>/dev/null"
       fi
       if [ -n "${cursor_arg}" ]; then
@@ -710,7 +707,9 @@ gvim_open_files() {
 # - -S replsize — space (bytes) -I can use for replacements. Defaults 255.
 expand_paths() {
   for path in "$@"; do
-    printf "${path}\0"
+    if [ -n "${path}" ]; then
+      printf "${path}\0"
+    fi
   done \
     | xargs -I{} -S1024 -0 sh -c 'realpath -- "{}" 2> /dev/null || echo "{}"' \
     | $(command -v gsed || command -v sed) 's/"/\\"/g' \
