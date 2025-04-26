@@ -485,7 +485,7 @@ gvim_ensure_server_id_or_use_default() {
     # This won't work unless we `eval` the command later:
     #   server_arg="--server \"${socket_path}\""
     server_arg="--server ${socket_path}"
-    is_server_running=$(test -S ${socket_path} && echo true || echo false)
+    is_server_running=$(test -S "${socket_path}" && echo true || echo false)
   fi
 }
 
