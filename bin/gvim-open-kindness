@@ -113,6 +113,7 @@ NVIM_OPEN_APPNAME="${NVIM_OPEN_APPNAME:-nvim}"
 # - REFER: From `neovide --help`:
 #     --neovim-bin <NEOVIM_BIN>
 #       ... env: NEOVIM_BIN=/opt/homebrew/bin/nvim
+# NEOVIM_BIN=/opt/homebrew/Cellar/neovim/0.10.4/bin/nvim
 
 NEOVIM_BIN="${NEOVIM_BIN}"
 
