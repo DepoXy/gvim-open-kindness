@@ -712,7 +712,7 @@ expand_paths() {
       printf "${path}\0"
     fi
   done \
-    | xargs -I{} -S1024 -0 sh -c 'realpath -- "{}" 2> /dev/null || echo "{}"' \
+    | xargs -I{} $(os_is_macos && echo "-S1024" || true) -0 sh -c 'realpath -- "{}" 2> /dev/null || echo "{}"' \
     | $(command -v gsed || command -v sed) 's/"/\\"/g' \
     | $(command -v gsed || command -v sed) 's/^\(.*\)$/"\1"/' \
     | tr "\n" " "
