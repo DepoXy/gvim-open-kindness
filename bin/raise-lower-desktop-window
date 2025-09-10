@@ -57,7 +57,7 @@ get_focused_window_id() {
 
   if [ "${de_name}" = "GNOME" ]; then
     get_focused_window_id_Wayland
-  else
+  elif [ "${de_name}" = "MATE" ]; then
     get_focused_window_id_XWindow
   fi
 }
@@ -88,7 +88,7 @@ raise_window() {
 
   if [ "${de_name}" = "GNOME" ]; then
     raise_window_Wayland "$@"
-  else
+  elif [ "${de_name}" = "MATE" ]; then
     # BWARE/2025-09-09: Author has not tested X11 paths,
     # but I'd assume the 2 approaches here work the same.
     if ${RAISELOWER_WITH_WMCTRL:-false}; then
@@ -243,7 +243,7 @@ minimize_window() {
 
   if [ "${de_name}" = "GNOME" ]; then
     minimize_window_Wayland "$@"
-  else
+  elif [ "${de_name}" = "MATE" ]; then
     minimize_window_XWindow "$@"
   fi
 }
@@ -300,20 +300,20 @@ os_is_linux() {
 }
 
 check_deps() {
-  if ! os_is_linux; then
-    >&2 echo "ERROR: This script only runs on Linux"
+  if os_is_linux; then
+    if [ "${de_name}" = "GNOME" ]; then
+      check_deps_wayland
+    elif [ "${de_name}" = "MATE" ]; then
+      check_deps_xwindow
+    fi
+  else
+    >&2 echo "ERROR: This script only runs on Linux or macOS"
 
     return 1
   fi
-
-  if [ "${de_name}" = "GNOME" ]; then
-    check_deps_Wayland
-  else
-    check_deps_XWindow
-  fi
 }
 
-check_deps_Wayland() {
+check_deps_wayland() {
   # FIXME/2025-01-14: Just guessing here. There might be a
   # more proper way to check if an Extension is installed.
   # - Perhaps failing on the call is good enough, see: raise_window_Wayland
@@ -330,7 +330,7 @@ alert_missing_gnome_extension_window_calls() {
   >&2 echo "  https://github.com/ickyicky/window-calls"
 }
 
-check_deps_XWindow() {
+check_deps_xwindow() {
   if ! command -v wmctrl > /dev/null; then
     >&2 echo "ERROR: Missing comand \`wmctrl\`"
 
