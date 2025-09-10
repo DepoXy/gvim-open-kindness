@@ -35,11 +35,13 @@ gvim_open_kindness_print_usage() {
 #        the Vim titlebar.
 #
 # - On Linux (X11), the servername should be unique enough that
-#   xdotool can identify the gVim window by its name.
+#   xdotool (or wmctrl; see raise-lower-desktop-window) can
+#   identify the gVim window by its name.
 #
-#   - On macOS, there's no xdotool, but also MacVim brings itself to
-#     front by default. You'll still see the servername in the title-
-#     bar.
+#   - On macOS, there's no xdotool. Some GUIs, like MacVim, or maybe
+#     only MacVim, will auto-front by default. For other GUIs, or
+#     for nvim in the shell, we'll use a Hammerspoon Spoon to front
+#     windows.
 #
 # SAVVY: Pro tip: You can use emojis, e.g.,:
 #
@@ -743,14 +745,9 @@ expand_paths() {
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
-# Bring gVim to front. This happens automatically on macOS.
-
-# (lb): I didn't enable this for Linux until I saw the behavior in macOS.
-# Because it's more often than not that I want to use Vim after opening a
-# file in it, I enabled this behavior for X11.
-
-# FTREQ/2025-01-25: Add Wayland path.
-# - For now, xdotool may work if GVim uses Xwayland.
+# Bring gVim to front. This happens automatically in MacVim on macOS
+# when you open a file, but not all (Neo)vim GUIs front themselves,
+# e.g., gVim on LM Mint doesn't auto-front on open.
 
 gvim_bring_window_to_front() {
   if [ -z "${raise_lower_window}" ]; then
@@ -759,28 +756,15 @@ gvim_bring_window_to_front() {
     return 0
   fi
 
-  if ! os_is_macos; then
-    gvim_bring_window_to_front_X "$@"
-  else
+  if os_is_macos; then
     gvim_bring_window_to_front_macOS "$@"
+  else
+    RAISELOWER_RAISE_ONLY=true \
+      "${raise_lower_window}" "$@"
   fi
 }
 
-gvim_bring_window_to_front_X() {
-  local server_id="$1"
-
-  if ! command -v xdotool > /dev/null; then
-
-    return 0
-  fi
-
-  # On Linux, or at least Linux Mint MATE, gVim doesn't front on its
-  # own. So go grab it.
-  # - Note that xdotool (for me) spits out an error message:
-  #     XGetWindowProperty[_NET_WM_DESKTOP] failed (code=1)
-  #   but it works nonetheless, so chuck the error.
-  xdotool search --name "${server_id}" windowactivate > /dev/null 2>&1
-}
+# ***
 
 # REFER: Requires Hammyspoony Hammerspoon Spoon to front nvim TUI,
 # or when more than one Neovide or GUI instance running:

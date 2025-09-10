@@ -13,12 +13,21 @@ toggle_window_focus() {
 
   # Fetch window ID, e.g., '65012405'.
   # SPIKE/2025-01-14: What if no windows focused?
-  win_before="$(get_focused_window_id "${de_name}")" \
-    || true
+  if ! ${RAISELOWER_RAISE_ONLY:-false}; then
+    win_before="$(get_focused_window_id "${de_name}")" \
+      || true
+  fi
 
+  # Raise window(s) aka bring window(s) to front
+  # using name(s) passed as args.
   if ! raise_window "${de_name}" "$@"; then
 
     return 1
+  fi
+
+  if ${RAISELOWER_RAISE_ONLY:-false}; then
+
+    return 0
   fi
 
   # TRACK/2024-12-01 04:54: If the frontmost window is not the one
@@ -80,7 +89,13 @@ raise_window() {
   if [ "${de_name}" = "GNOME" ]; then
     raise_window_Wayland "$@"
   else
-    raise_window_XWindow "$@"
+    # BWARE/2025-09-09: Author has not tested X11 paths,
+    # but I'd assume the 2 approaches here work the same.
+    if ${RAISELOWER_WITH_WMCTRL:-false}; then
+      raise_window_XWindow_wmctrl "$@"
+    elif ${RAISELOWER_WITH_XDOTOOL:-true}; then
+      raise_window_XWindow_xdotool "$@"
+    fi
   fi
 }
 
@@ -182,7 +197,7 @@ raise_window_Wayland() {
   fi
 }
 
-raise_window_XWindow() {
+raise_window_XWindow_wmctrl() {
   local found_window=false
 
   local win_title
@@ -198,6 +213,24 @@ raise_window_XWindow() {
 
     return 1
   fi
+}
+
+raise_window_XWindow_xdotool() {
+  if ! command -v xdotool > /dev/null; then
+    >&2 echo "ERROR: Missing xdotool"
+
+    return 1
+  fi
+
+  # On Linux, or at least Linux Mint MATE, gVim doesn't front on its
+  # own. So go grab it.
+  # - Note that xdotool (for me) spits out an error message:
+  #     XGetWindowProperty[_NET_WM_DESKTOP] failed (code=1)
+  #   but it works nonetheless, so chuck the error.
+  local win_title
+  for win_title in "$@"; do
+    xdotool search --name "${win_title}" windowactivate > /dev/null 2>&1
+  done
 }
 
 # ***
