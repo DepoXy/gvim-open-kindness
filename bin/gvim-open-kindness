@@ -166,6 +166,8 @@ NVIM_SPAWN_OPTION_SCRATCH="[Scratch]"
 
 source_deps() {
   source_dep_homebrew
+
+  soft_dep_toggle_visibility
 }
 
 source_dep_homebrew() {
@@ -203,6 +205,27 @@ print_homebrew_path() {
   [ -x "${brew_path}" ] || brew_path=""
 
   printf "%s" "${brew_path}"
+}
+
+# ***
+
+soft_dep_toggle_visibility() {
+  # E.g., ~/.kit/sh/gvim-open-kindness/bin/
+  local _vimokbin_canonical_dir
+  _vimokbin_canonical_dir="$(dirname -- "$(realpath -- "$0")")"
+
+  # E.g., ~/.kit/sh/gvim-open-kindness/bin/raise-lower-desktop-window
+  local _vimokbin_toggle_visibility="raise-lower-desktop-window"
+
+  # Define file-scope var.
+  raise_lower_window="${_vimokbin_canonical_dir}/${_vimokbin_toggle_visibility}"
+
+  if ! [ -x "${raise_lower_window}" ]; then
+    >&2 echo "ALERT: Raise cmd not found at:"
+    >&2 echo "  ${raise_lower_window}"
+
+    raise_lower_window=""
+  fi
 }
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
@@ -730,6 +753,12 @@ expand_paths() {
 # - For now, xdotool may work if GVim uses Xwayland.
 
 gvim_bring_window_to_front() {
+  if [ -z "${raise_lower_window}" ]; then
+    # Previously emitted ALERT.
+
+    return 0
+  fi
+
   if ! os_is_macos; then
     gvim_bring_window_to_front_X "$@"
   else
