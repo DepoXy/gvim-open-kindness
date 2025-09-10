@@ -186,10 +186,12 @@ raise_window_Wayland() {
   done
 
   if [ -n "${window_id}" ]; then
+    # DUNNO/2025-09-09: In GNOME Shell, prints "()" line to stdout.
+    #   >&2 echo "window_id: ${window_id}"
     gdbus call --session --dest org.gnome.Shell \
       --object-path /org/gnome/Shell/Extensions/Windows \
       --method org.gnome.Shell.Extensions.Windows.Activate \
-      -- "${window_id}"
+      -- "${window_id}" > /dev/null
   else
     >&2 echo "ALERT: No matching window identified for: $@"
 
