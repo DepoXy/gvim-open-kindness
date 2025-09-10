@@ -9,6 +9,16 @@
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
 toggle_window_focus() {
+  if os_is_linux; then
+    toggle_window_focus_linux "$@"
+  elif os_is_macos; then
+    toggle_window_focus_macos "$@"
+  fi
+}
+
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+
+toggle_window_focus_linux() {
   local win_before
 
   # Fetch window ID, e.g., '65012405'.
@@ -295,8 +305,25 @@ _humb_probe_desktop_environment() {
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
+# REFER: https://github.com/DepoXy/macOS-Hammyspoony#🥄
+# https://github.com/DepoXy/macOS-Hammyspoony/blob/release/Source/URISetFrontmost.spoon/init.lua
+
+toggle_window_focus_macos() {
+  local pattern="$1"
+
+  open -g "hammerspoon://setFrontmost?name=${server_id}" \
+    2> /dev/null \
+    || true
+}
+
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+
 os_is_linux() {
   [ "$(uname)" = "Linux" ]
+}
+
+os_is_macos() {
+  [ "$(uname)" = "Darwin" ]
 }
 
 check_deps() {
@@ -306,6 +333,8 @@ check_deps() {
     elif [ "${de_name}" = "MATE" ]; then
       check_deps_xwindow
     fi
+  elif os_is_macos; then
+    check_deps_darwin
   else
     >&2 echo "ERROR: This script only runs on Linux or macOS"
 
@@ -342,6 +371,12 @@ check_deps_xwindow() {
 
     return 1
   fi
+}
+
+# OPTIN: macOS-Hammyspoony has a Spoon that'll toggle window viz & frontiness:
+# https://github.com/DepoXy/macOS-Hammyspoony/blob/release/Source/URISetFrontmost.spoon/init.lua
+check_deps_darwin() {
+  :
 }
 
 # ***

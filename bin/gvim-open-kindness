@@ -822,9 +822,12 @@ gvim_bring_window_to_front_macOS() {
     open -a "${NVIM_OPEN_APPNAME}" \
       || true
   else
-    open -g "hammerspoon://setFrontmost?name=${server_id}" \
-      2> /dev/null \
-      || true
+    # Essentially:
+    #   open -g "hammerspoon://setFrontmost?name=${pattern}" \
+    #     2> /dev/null \
+    #     || true
+    RAISELOWER_RAISE_ONLY=true \
+      "${raise_lower_window}" "$@"
   fi
 }
 
