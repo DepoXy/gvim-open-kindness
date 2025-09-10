@@ -772,7 +772,7 @@ gvim_bring_window_to_front() {
 #   https://github.com/DepoXy/macOS-Hammyspoony#🥄
 
 gvim_bring_window_to_front_macOS() {
-  local server_id="$1"
+  local pattern="$1"
 
   if ! ${is_server_running}; then
     # Was fronted when the editor was started (and either
@@ -816,8 +816,8 @@ gvim_bring_window_to_front_macOS() {
 
   # DUNNO/2025-02-24: `open -a` does not alway front. (Or at least it
   # was working for months, and now it's not.) So always use Hammerspoon.
-  #  if ${is_single_gui_instance} || [ -z "${server_id}" ]; then
-  if [ -z "${server_id}" ]; then
+  #  if ${is_single_gui_instance} || [ -z "${pattern}" ]; then
+  if [ -z "${pattern}" ]; then
     # E.g., "neovide"
     open -a "${NVIM_OPEN_APPNAME}" \
       || true
