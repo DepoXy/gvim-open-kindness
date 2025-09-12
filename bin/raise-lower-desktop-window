@@ -155,8 +155,11 @@ raise_window_Wayland() {
   #
   # For complex window titles, e.g., if you copy-paste this code
   # into a terminal, and that terminal window title (PS4) is wired
-  # to show the command being run, you might see delimited output,
-  # e.g., something like this:
+  # to show the command being run, you might see delimited output.
+  # I.e., because you're running the command in the terminal, and
+  # because the terminal changes the window title to show the
+  # command, you'll see the command you pasted in the list of
+  # window titles, but it'll be escaped, e.g., something like this:
   #   ("{\"in_current_workspace\":true,...,\"title\":\"6. windows_details=
   #     \\\"$(echo \\\"${windows_list}\\\" | head -c -4 | tail -c +3
   #     | jq '.[] | .id' | xargs -I{} gdbus call ..., \"canshade\":false}",)
