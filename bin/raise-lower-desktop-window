@@ -132,10 +132,16 @@ raise_window_Wayland() {
   # though that probably only happens when you're debugging, and you're
   # manually replaying windows_list you captured previously.
 
+  # Remove leading (tail -c +3) and trailing (head -c -4) parens-quoted:
+  #   (' and ',)
+  local windows_ids
+  windows_ids="$(
+    echo "${windows_list}" | head -c -4 | tail -c +3 | jq '.[] | .id'
+  )"
+
   local windows_details
   windows_details="$(
-    echo "${windows_list}" | head -c -4 | tail -c +3 \
-      | jq '.[] | .id' \
+    echo "${windows_ids}" \
       | xargs -I{} \
         gdbus call --session --dest org.gnome.Shell \
         --object-path /org/gnome/Shell/Extensions/Windows \
