@@ -204,9 +204,41 @@ raise_window_Wayland() {
   title_and_ids="$(
     echo "${windows_details}" \
       | gawk 'match($0, /\{.*\}/, a) {print a[0]}' \
-      | sed -e 's/\\"/"/g' -e 's/\\\\"/\\"/g' \
-      | jq -r '"\(.title)\t\(.id)"'
+      | sed -e 's/\\\\"/\\"/g' \
+      | jq -r '"\(.title)\t\(.id)"' \
+        2> /dev/null
   )"
+  if [ $? -ne 0 ]; then
+    if ${RAISELOWER_DEBUG:-false}; then
+      >&2 echo "ERROR: Failed to parse window_details (1)"
+      >&2 echo "${windows_details}"
+    fi
+    # DEBUG: If you get a parse error with a line number, e.g.,
+    #   parse error: Invalid numeric literal at line 20, column 297
+    # Then run with trace:
+    #   RAISELOWER_DEBUG=true ...
+    # And run the captured output manually (which will also make
+    # the culprit line more apparent), e.g.,
+    #   RAISELOWER_DEBUG=true \
+    #     ~/.kit/sh/gvim-open-kindness/bin/raise-lower-desktop-window \
+    #       {term} > windows_details
+    #   cat windows_details | gawk ...
+
+    title_and_ids="$(
+      echo "${windows_details}" \
+        | gawk 'match($0, /\{.*\}/, a) {print a[0]}' \
+        | sed -e 's/\\"/"/g' -e 's/\\\\"/\\"/g' \
+        | jq -r '"\(.title)\t\(.id)"'
+    )"
+    if [ $? -ne 0 ]; then
+      >&2 echo "ERROR: Failed to parse window_details (2)"
+      if ${RAISELOWER_DEBUG:-false}; then
+        >&2 echo "${windows_details}"
+      fi
+
+      return 1
+    fi
+  fi
 
   local window_id
 
