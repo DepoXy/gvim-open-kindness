@@ -49,7 +49,10 @@ toggle_window_focus_linux() {
   #   sleep 0.13
 
   local win_after
-  win_after="$(get_focused_window_id "${de_name}")"
+  if ! win_after="$(get_focused_window_id "${de_name}")"; then
+
+    return 1
+  fi
 
   if [ "${win_before}" = "${win_after}" ]; then
     # Window was already topmost, so minimize (iconify) it.
