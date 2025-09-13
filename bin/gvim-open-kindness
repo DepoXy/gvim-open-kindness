@@ -759,8 +759,22 @@ gvim_bring_window_to_front() {
   if os_is_macos; then
     gvim_bring_window_to_front_macOS "$@"
   else
-    RAISELOWER_RAISE_ONLY=true \
-      "${raise_lower_window}" "$@"
+    if ! ${is_server_running}; then
+      # If raise fails b/c process not started yet, it stderrs:
+      #   ALERT: No matching window identified for: {}
+      # INERT: Wait or poll instead.
+      # - ORNOT: Neovide fronts itself when first started,
+      #   so this operation technically unnecessary.
+      sleep 0.97
+    fi
+    if ! RAISELOWER_RAISE_ONLY=true "${raise_lower_window}" "$@" 2> /dev/null; then
+
+      # This time, with printing.
+      if ! RAISELOWER_RAISE_ONLY=true "${raise_lower_window}" "$@"; then
+
+        exit_1
+      fi
+    fi
   fi
 }
 
