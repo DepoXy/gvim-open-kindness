@@ -105,8 +105,9 @@ get_window_ids_Wayland() {
   # though that probably only happens when you're debugging, and you're
   # manually replaying windows_list you captured previously.
 
-  # Remove leading (tail -c +3) and trailing (head -c -4) parens-quoted:
-  #   (' and ',)
+  # Remove 2 leading (tail -c +3) and 4 trailing (head -c -4)
+  # characters (inner-quoted parenthetical):
+  #   (' and ',)\n
 
   local windows_list_json
   windows_list_json="$(
