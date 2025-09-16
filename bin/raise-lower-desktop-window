@@ -109,9 +109,9 @@ get_window_ids_Wayland() {
   # characters (inner-quoted parenthetical):
   #   (' and ',)\n
 
-  local windows_list_json
-  windows_list_json="$(
-    echo "${windows_list_parenquoted}" | head -c -4 | tail -c +3
+  local windows_list_doubly_escaped
+  windows_list_doubly_escaped="$(
+    printf '%s\n' "${windows_list_parenquoted}" | head -c -4 | tail -c +3
   )"
 
   if [ -n "${RAISELOWER_TRACE_DIR}" ]; then
@@ -124,12 +124,16 @@ get_window_ids_Wayland() {
   fi
 
   # Print matching window IDs.
+  local windows_list_json="$(
+    echo "${windows_list_doubly_escaped}" \
+      | sed -e 's/\(\\\\\)\+\"/'"'"'/g' \
+      | sed -e 's/\\"/"/g'
+  )"
   if [ -n "${RAISELOWER_TRACE_DIR}" ]; then
     echo "${windows_list_json}" > "${RAISELOWER_TRACE_DIR}/RLTRACE-03-WINSLIST_DESCAPED"
   fi
 
   if ! echo "${windows_list_json}" \
-    | sed -e 's/\\"/"/g' -e 's/\\\\"/\\"/g' \
     | jq ".[] | ${select_focus} .id" \
     ; then
 
@@ -177,6 +181,10 @@ raise_window_Wayland() {
     return 1
   fi
 
+  # Note if "'" in window title, then ("{\" ... \"}",) used
+  # instead of ('{" ... "}',) — but we remove the outer
+  # parentheses and outer quotes, so we can just remove the
+  # escapes (otherwise jq won't be able to parse the blob).
   local windows_details
   windows_details="$(
     echo "${windows_ids}" \
@@ -184,7 +192,9 @@ raise_window_Wayland() {
         gdbus call --session --dest org.gnome.Shell \
         --object-path /org/gnome/Shell/Extensions/Windows \
         --method org.gnome.Shell.Extensions.Windows.Details \
-        {} 2> /dev/null
+        {} 2> /dev/null \
+      | sed -e 's/\(\\\\\)\+\"/'"'"'/g' \
+      | sed -e "s/\\\\'/'/g"
   )"
 
   if [ -n "${RAISELOWER_TRACE_DIR}" ]; then
@@ -220,11 +230,17 @@ raise_window_Wayland() {
   #   parse error: Invalid numeric literal at line 9, column 258
   # So in addition to \" -> " also convert \\" -> \" (or at least WFM).
 
+  # Note if the window title uses single-quotes, then window-calls changes
+  # the output format and uses ({" ... }",) instead of ('{ ... }',). It
+  # also uses escaped-double-quotes \" inside the value strings, which we
+  # need to remove so that `jq` can parse the struct.
+
   local title_and_ids
+  # Remove ('{ and }',) or ("{ and }",) from each line with gawk-match.
   title_and_ids="$(
-    echo "${windows_details}" \
+    printf "%s" "${windows_details}" \
       | gawk 'match($0, /\{.*\}/, a) {print a[0]}' \
-      | sed -e 's/\\\\"/\\"/g' \
+      | sed -e 's/\\\"//g' \
       | jq -r '"\(.title)\t\(.id)"' \
         2> /dev/null
   )"
