@@ -93,6 +93,13 @@ get_window_ids_Wayland() {
     return 1
   fi
 
+  # USAGE: E.g.,
+  #   RAISELOWER_TRACE_DIR=/tmp/rltrace ./raise-lower-desktop-window
+  if [ -n "${RAISELOWER_TRACE_DIR}" ]; then
+    mkdir -p -- "${RAISELOWER_TRACE_DIR}"
+    echo "${windows_list_parenquoted}" > "${RAISELOWER_TRACE_DIR}/RLTRACE-01-WINSLIST_RAW"
+  fi
+
   # Ignore errors, e.g.,
   #   "Error: GDBus.Error:org.gnome.gjs.JSError.Error: Not found"
   # though that probably only happens when you're debugging, and you're
@@ -106,12 +113,20 @@ get_window_ids_Wayland() {
     echo "${windows_list_parenquoted}" | head -c -4 | tail -c +3
   )"
 
+  if [ -n "${RAISELOWER_TRACE_DIR}" ]; then
+    echo "${windows_list_doubly_escaped}" > "${RAISELOWER_TRACE_DIR}/RLTRACE-02-WINSLIST_UNPACKED"
+  fi
+
   local select_focus=""
   if ${_is_focused}; then
     select_focus="select(.focus == true) | "
   fi
 
   # Print matching window IDs.
+  if [ -n "${RAISELOWER_TRACE_DIR}" ]; then
+    echo "${windows_list_json}" > "${RAISELOWER_TRACE_DIR}/RLTRACE-03-WINSLIST_DESCAPED"
+  fi
+
   if ! echo "${windows_list_json}" \
     | sed -e 's/\\"/"/g' -e 's/\\\\"/\\"/g' \
     | jq ".[] | ${select_focus} .id" \
@@ -170,6 +185,10 @@ raise_window_Wayland() {
         --method org.gnome.Shell.Extensions.Windows.Details \
         {} 2> /dev/null
   )"
+
+  if [ -n "${RAISELOWER_TRACE_DIR}" ]; then
+    echo "${windows_details}" > "${RAISELOWER_TRACE_DIR}/RLTRACE-11-WINSIDS_DESCAPED"
+  fi
 
   # SAVVY: If window title contains single quotes, gdbus
   # escapes all the double quotes. Or something like that.
