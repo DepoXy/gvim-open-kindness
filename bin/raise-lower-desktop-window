@@ -222,7 +222,7 @@ source_deps() {
   . "${canon_base}/../deps/gnome-window-calls/lib/gnome-window-calls.sh"
 }
 
-check_deps() {
+check_deps_raise_lower() {
   if os_is_linux; then
     if [ "${de_name}" = "GNOME" ]; then
       # CXREF:
@@ -275,7 +275,7 @@ main() {
   local de_name
   de_name="$(_humb_probe_desktop_environment)"
 
-  if ! check_deps; then
+  if ! check_deps_raise_lower; then
 
     return 1
   fi
