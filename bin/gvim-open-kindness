@@ -216,11 +216,11 @@ soft_dep_toggle_visibility() {
   local _vimokbin_canonical_dir
   _vimokbin_canonical_dir="$(dirname -- "$(realpath -- "$0")")"
 
-  # E.g., ~/.kit/sh/gvim-open-kindness/bin/raise-lower-desktop-window
-  local _vimokbin_toggle_visibility="raise-lower-desktop-window"
+  # E.g., ~/.kit/sh/gvim-open-kindness/deps/raise-or-lower/bin/raise-or-lower
+  local _vimokbin_raise_or_lower="../deps/raise-or-lower/bin/raise-or-lower"
 
   # Define file-scope var.
-  raise_lower_window="${_vimokbin_canonical_dir}/${_vimokbin_toggle_visibility}"
+  raise_lower_window="${_vimokbin_canonical_dir}/${_vimokbin_raise_or_lower}"
 
   if ! [ -x "${raise_lower_window}" ]; then
     >&2 echo "ALERT: Raise cmd not found at:"
