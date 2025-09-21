@@ -62,89 +62,15 @@ toggle_window_focus_linux() {
 
 # ***
 
-# REFER: Depends on GNOME Shell Extension:
-#   https://extensions.gnome.org/extension/4724/window-calls/
-#   https://github.com/ickyicky/window-calls
 get_focused_window_id() {
   local de_name="$1"
 
   if [ "${de_name}" = "GNOME" ]; then
-    get_window_ids_Wayland ${_is_focused:-true}
+    # CXREF:
+    # ~/.kit/sh/gnome-window-calls/lib/gnome-window-calls.sh
+    get_window_ids_Wayland_focused
   elif [ "${de_name}" = "MATE" ]; then
     get_focused_window_id_XWindow
-  fi
-}
-
-get_window_ids_Wayland() {
-  local _is_focused="${1:-false}"
-
-  local windows_list_parenquoted
-  # E.g., ('{JSON}')
-  if ! windows_list_parenquoted="$(
-    gdbus call --session --dest org.gnome.Shell \
-      --object-path /org/gnome/Shell/Extensions/Windows \
-      --method org.gnome.Shell.Extensions.Windows.List
-  )"; then
-    # SAVVY: check_deps should make this path unreachable.
-    # E.g. — Error: GDBus.Error:org.freedesktop.DBus.Error.UnknownMethod:
-    #   Object does not exist at path “/org/gnome/Shell/Extensions/Foo”
-    alert_missing_gnome_extension_window_calls
-
-    return 1
-  fi
-
-  # USAGE: E.g.,
-  #   RAISELOWER_TRACE_DIR=/tmp/rltrace ./raise-lower-desktop-window
-  if [ -n "${RAISELOWER_TRACE_DIR}" ]; then
-    mkdir -p -- "${RAISELOWER_TRACE_DIR}"
-    echo "${windows_list_parenquoted}" > "${RAISELOWER_TRACE_DIR}/RLTRACE-01-WINSLIST_RAW"
-  fi
-
-  # Ignore errors, e.g.,
-  #   "Error: GDBus.Error:org.gnome.gjs.JSError.Error: Not found"
-  # though that probably only happens when you're debugging, and you're
-  # manually replaying windows_list you captured previously.
-
-  # Remove 2 leading (tail -c +3) and 4 trailing (head -c -4)
-  # characters (inner-quoted parenthetical):
-  #   (' and ',)\n
-
-  local windows_list_doubly_escaped
-  windows_list_doubly_escaped="$(
-    printf '%s\n' "${windows_list_parenquoted}" | head -c -4 | tail -c +3
-  )"
-
-  if [ -n "${RAISELOWER_TRACE_DIR}" ]; then
-    echo "${windows_list_doubly_escaped}" > "${RAISELOWER_TRACE_DIR}/RLTRACE-02-WINSLIST_UNPACKED"
-  fi
-
-  local select_focus=""
-  if ${_is_focused}; then
-    select_focus="select(.focus == true) | "
-  fi
-
-  # Print matching window IDs.
-  local windows_list_json="$(
-    echo "${windows_list_doubly_escaped}" \
-      | sed -e 's/\(\\\\\)\+\"/'"'"'/g' \
-      | sed -e 's/\\"/"/g'
-  )"
-  if [ -n "${RAISELOWER_TRACE_DIR}" ]; then
-    echo "${windows_list_json}" > "${RAISELOWER_TRACE_DIR}/RLTRACE-03-WINSLIST_DESCAPED"
-  fi
-
-  if ! echo "${windows_list_json}" \
-    | jq ".[] | ${select_focus} .id" \
-    ; then
-
-    # SPIKE/DUNNO: What's an error indicate?
-    # - No focused window? Or no windows at all?
-    >&2 echo "DUNNO: Cannot determine $(
-      ! ${_is_focused} || echo "focused "
-    )windows ID(s) (window-calls)"
-    >&2 echo "${windows_list_json}"
-
-    return 1
   fi
 }
 
@@ -159,7 +85,9 @@ raise_window() {
   shift
 
   if [ "${de_name}" = "GNOME" ]; then
-    raise_window_Wayland "$@"
+    # CXREF:
+    # ~/.kit/sh/gnome-window-calls/lib/gnome-window-calls.sh
+    raise_window_Wayland_titled "$@"
   elif [ "${de_name}" = "MATE" ]; then
     # BWARE/2025-09-09: Author has not tested X11 paths,
     # but I'd assume the 2 approaches here work the same.
@@ -168,143 +96,6 @@ raise_window() {
     elif ${RAISELOWER_WITH_XDOTOOL:-true}; then
       raise_window_XWindow_xdotool "$@"
     fi
-  fi
-}
-
-# CXREF: See similar gdbus calls:
-#   _humb_print_terminal_window_title_prefixes_Wayland
-# ~/.kit/sh/sh-humble-prompt/lib/show-command-name-in-window-title.sh
-raise_window_Wayland() {
-  local windows_ids
-  if ! windows_ids="$(get_window_ids_Wayland ${_is_focused:-false})"; then
-
-    return 1
-  fi
-
-  # Note if "'" in window title, then ("{\" ... \"}",) used
-  # instead of ('{" ... "}',) — but we remove the outer
-  # parentheses and outer quotes, so we can just remove the
-  # escapes (otherwise jq won't be able to parse the blob).
-  local windows_details
-  windows_details="$(
-    echo "${windows_ids}" \
-      | xargs -I{} \
-        gdbus call --session --dest org.gnome.Shell \
-        --object-path /org/gnome/Shell/Extensions/Windows \
-        --method org.gnome.Shell.Extensions.Windows.Details \
-        {} 2> /dev/null \
-      | sed -e 's/\(\\\\\)\+\"/'"'"'/g' \
-      | sed -e "s/\\\\'/'/g"
-  )"
-
-  if [ -n "${RAISELOWER_TRACE_DIR}" ]; then
-    echo "${windows_details}" > "${RAISELOWER_TRACE_DIR}/RLTRACE-11-WINSIDS_DESCAPED"
-  fi
-
-  # SAVVY: If window title contains single quotes, gdbus
-  # escapes all the double quotes. Or something like that.
-  # Which the sed removes.
-  #
-  # For complex window titles, e.g., if you copy-paste this code
-  # into a terminal, and that terminal window title (PS4) is wired
-  # to show the command being run, you might see delimited output.
-  # I.e., because you're running the command in the terminal, and
-  # because the terminal changes the window title to show the
-  # command, you'll see the command you pasted in the list of
-  # window titles, but it'll be escaped, e.g., something like this:
-  #   ("{\"in_current_workspace\":true,...,\"title\":\"6. windows_details=
-  #     \\\"$(echo \\\"${windows_list}\\\" | head -c -4 | tail -c +3
-  #     | jq '.[] | .id' | xargs -I{} gdbus call ..., \"canshade\":false}",)
-  # As opposed to how `gdbus` prints output if it doesn't need to
-  # be escaped, e.g.:
-  #   ('{"in_current_workspace":true,...,"title":"4. dconf watch /",
-  #     ...,"canshade":false}',)
-  # And when the former, delimited text is unpacked by gawk and
-  # sed-substituted w/ 's/\\"/"/g' only, you might see, e.g.,:
-  #   {"in_current_workspace":true,...,"title":"6. windows_details=
-  #     \\"$(echo \\"${windows_list}\\" | head -c -4 | tail -c +3
-  #     | jq '.[] | .id' | xargs -I{} gdbus call ...,"canshade":false}
-  # But when fed through the jq filter, e.g.,
-  #   ... | jq -r '"\(.title)\t\(.id)"'
-  # that line causes an error, e.g.,
-  #   parse error: Invalid numeric literal at line 9, column 258
-  # So in addition to \" -> " also convert \\" -> \" (or at least WFM).
-
-  # Note if the window title uses single-quotes, then window-calls changes
-  # the output format and uses ({" ... }",) instead of ('{ ... }',). It
-  # also uses escaped-double-quotes \" inside the value strings, which we
-  # need to remove so that `jq` can parse the struct.
-
-  local title_and_ids
-  # Remove ('{ and }',) or ("{ and }",) from each line with gawk-match.
-  title_and_ids="$(
-    printf "%s" "${windows_details}" \
-      | gawk 'match($0, /\{.*\}/, a) {print a[0]}' \
-      | sed -e 's/\\\"//g' \
-      | jq -r '"\(.title)\t\(.id)"' \
-        2> /dev/null
-  )"
-  if [ $? -ne 0 ]; then
-    if ${RAISELOWER_DEBUG:-false}; then
-      >&2 echo "ERROR: Failed to parse window_details (1)"
-      >&2 echo "${windows_details}"
-    fi
-    # DEBUG: If you get a parse error with a line number, e.g.,
-    #   parse error: Invalid numeric literal at line 20, column 297
-    # Then run with trace:
-    #   RAISELOWER_DEBUG=true ...
-    # And run the captured output manually (which will also make
-    # the culprit line more apparent), e.g.,
-    #   RAISELOWER_DEBUG=true \
-    #     ~/.kit/sh/gvim-open-kindness/bin/raise-lower-desktop-window \
-    #       {term} > windows_details
-    #   cat windows_details | gawk ...
-
-    title_and_ids="$(
-      echo "${windows_details}" \
-        | gawk 'match($0, /\{.*\}/, a) {print a[0]}' \
-        | sed -e 's/\\"/"/g' -e 's/\\\\"/\\"/g' \
-        | jq -r '"\(.title)\t\(.id)"'
-    )"
-    if [ $? -ne 0 ]; then
-      >&2 echo "ERROR: Failed to parse window_details (2)"
-      if ${RAISELOWER_DEBUG:-false}; then
-        >&2 echo "${windows_details}"
-      fi
-
-      return 1
-    fi
-  fi
-
-  local window_id
-
-  local pattern
-  for pattern in "$@"; do
-    local title_and_id
-    # Use Perl regex, or \t doesn't work (though literal "${pattern}.*	"
-    # works, but not "${pattern}.*"$'\t', which is a Bashism anyway).
-    title_and_id="$(
-      echo "${title_and_ids}" | grep -P -e "${pattern}.*\t" | head -n1
-    )"
-
-    if [ -n "${title_and_id}" ]; then
-      window_id="$(echo "${title_and_id}" | sed 's/.*\t//')"
-
-      break
-    fi
-  done
-
-  if [ -n "${window_id}" ]; then
-    # DUNNO/2025-09-09: In GNOME Shell, prints "()" line to stdout.
-    #   >&2 echo "window_id: ${window_id}"
-    gdbus call --session --dest org.gnome.Shell \
-      --object-path /org/gnome/Shell/Extensions/Windows \
-      --method org.gnome.Shell.Extensions.Windows.Activate \
-      -- "${window_id}" > /dev/null
-  else
-    >&2 echo "ALERT: No matching window identified for: $@"
-
-    return 1
   fi
 }
 
@@ -351,20 +142,12 @@ minimize_window() {
   shift
 
   if [ "${de_name}" = "GNOME" ]; then
+    # CXREF:
+    # ~/.kit/sh/gnome-window-calls/lib/gnome-window-calls.sh
     minimize_window_Wayland "$@"
   elif [ "${de_name}" = "MATE" ]; then
     minimize_window_XWindow "$@"
   fi
-}
-
-minimize_window_Wayland() {
-  local window_id="$1"
-
-  # OUTPUTs: ()
-  gdbus call --session --dest org.gnome.Shell \
-    --object-path /org/gnome/Shell/Extensions/Windows \
-    --method org.gnome.Shell.Extensions.Windows.Minimize \
-    -- "${window_id}" > /dev/null
 }
 
 minimize_window_XWindow() {
@@ -425,10 +208,24 @@ os_is_macos() {
   [ "$(uname)" = "Darwin" ]
 }
 
+source_deps() {
+  local canon_base
+  canon_base="$(dirname -- "$(realpath -- "$0")")"
+
+  # Load:
+  #   check_deps_gnome_extension_window_calls
+  #   get_window_ids_Wayland_focused (see also: get_window_ids_Wayland)
+  #   raise_window_Wayland_titled
+  #   minimize_window_Wayland
+  . "${canon_base}/../deps/gnome-window-calls/lib/gnome-window-calls.sh"
+}
+
 check_deps() {
   if os_is_linux; then
     if [ "${de_name}" = "GNOME" ]; then
-      check_deps_wayland
+      # CXREF:
+      # ~/.kit/sh/gnome-window-calls/lib/gnome-window-calls.sh
+      check_deps_gnome_extension_window_calls
     elif [ "${de_name}" = "MATE" ]; then
       check_deps_xwindow
     fi
@@ -439,23 +236,6 @@ check_deps() {
 
     return 1
   fi
-}
-
-check_deps_wayland() {
-  # FIXME/2025-01-14: Just guessing here. There might be a
-  # more proper way to check if an Extension is installed.
-  # - Perhaps failing on the call is good enough, see: raise_window_Wayland
-  if ! [ -d "${HOME}/.local/share/gnome-shell/extensions/window-calls@domandoman.xyz" ]; then
-    alert_missing_gnome_extension_window_calls
-
-    return 1
-  fi
-}
-
-alert_missing_gnome_extension_window_calls() {
-  >&2 echo "ERROR: Missing GNOME Extension: window-calls"
-  >&2 echo "  https://extensions.gnome.org/extension/4724/window-calls/"
-  >&2 echo "  https://github.com/ickyicky/window-calls"
 }
 
 check_deps_xwindow() {
@@ -486,6 +266,8 @@ main() {
 
     return 1
   fi
+
+  source_deps
 
   local de_name
   de_name="$(_humb_probe_desktop_environment)"

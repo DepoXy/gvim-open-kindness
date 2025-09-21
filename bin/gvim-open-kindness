@@ -35,8 +35,8 @@ gvim_open_kindness_print_usage() {
 #        the Vim titlebar.
 #
 # - On Linux (X11), the servername should be unique enough that
-#   xdotool (or wmctrl; see raise-lower-desktop-window) can
-#   identify the gVim window by its name.
+#   xdotool (or wmctrl; see gnome-window-calls) can identify the
+#   gVim window by its name.
 #
 #   - On macOS, there's no xdotool. Some GUIs, like MacVim, or maybe
 #     only MacVim, will auto-front by default. For other GUIs, or
