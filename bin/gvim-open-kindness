@@ -630,10 +630,11 @@ gvim_open_files() {
   local cursor_cmd=""
   local cursor_send=""
   if [ -n "${row_number}" ] && [ -n "${col_number}" ]; then
+    local middleize_line="zz"
     # The cursor_cmd applies to new instances.
-    cursor_cmd="-c 'call cursor(${row_number}, ${col_number})'"
+    cursor_cmd="-c 'call cursor(${row_number}, ${col_number})' -c 'normal ${middleize_line}'"
     # The cursor_send applies to existing instances.
-    cursor_send="--remote-send '<ESC>:call cursor(${row_number}, ${col_number})<CR>'"
+    cursor_send="--remote-send '<ESC>:call cursor(${row_number}, ${col_number})<CR>${middleize_line}'"
   fi
 
   local scratch_cmd=""
