@@ -766,7 +766,7 @@ gvim_bring_window_to_front() {
       # INERT: Wait or poll instead.
       # - ORNOT: Neovide fronts itself when first started,
       #   so this operation technically unnecessary.
-      sleep 0.97
+      sleep 1.13
     fi
     if ! RAISELOWER_RAISE_ONLY=true "${raise_lower_window}" "$@" 2> /dev/null; then
 
