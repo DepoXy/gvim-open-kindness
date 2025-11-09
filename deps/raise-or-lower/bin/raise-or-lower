@@ -1,10 +1,14 @@
-#!/bin/sh
+#!/bin/bash
 # vim:tw=0:ts=2:sw=2:et:norl:ft=bash
 # Author: Landon Bouma <https://tallybark.com/>
 # Project: https://github.com/DepoXy/raise-or-lower#📈📉
 # License: MIT. Please find more in the LICENSE file.
 
 # Copyright (c) © 2024-2025 Landon Bouma. All Rights Reserved.
+
+# SAVVY: Using #!/bin/bash for `export -f` for `xargs`,
+# for gnome-window-calls.sh (otherwise this file itself
+# is POSIX-compatible).
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
