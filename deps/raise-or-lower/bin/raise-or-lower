@@ -294,16 +294,16 @@ main() {
 
 # ***
 
-_vimokbrldw_this_file_name="raise-or-lower"
-_vimokbrldw_canonical_comm="$(basename -- "$(realpath -- "$0")")"
-_vimokbrldw_shell_sourced() {
-  [ "${_vimokbrldw_canonical_comm}" != "${_vimokbrldw_this_file_name}" ]
+_rolbinrol_this_file_name="raise-or-lower"
+_rolbinrol_canonical_comm="$(basename -- "$(realpath -- "$0")")"
+_rolbinrol_shell_sourced() {
+  [ "${_rolbinrol_canonical_comm}" != "${_rolbinrol_this_file_name}" ]
 }
 
-if _vimokbrldw_shell_sourced; then
+if _rolbinrol_shell_sourced; then
   unset -f main
-  unset -v _vimokbrldw_this_file_name
-  unset -f _vimokbrldw_shell_sourc
+  unset -v _rolbinrol_this_file_name
+  unset -f _rolbinrol_shell_sourc
 else
   main "$@"
 fi
