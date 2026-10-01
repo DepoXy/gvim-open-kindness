@@ -820,7 +820,12 @@ gvim_bring_window_to_front_macOS() {
 
   if ! is_editor_gvim && [ "${NVIM_OPEN_APPNAME}" != "nvim" ]; then
     local n_instances
-    n_instances="$(ps aux | grep -e "${NVIM_OPEN_APPNAME}" | grep -v grep | wc -l)"
+    if ${NVIM_OPEN_INSTANCE_COUNT_LEGACY:-false}; then
+      n_instances="$(ps aux | grep -e "${NVIM_OPEN_APPNAME}" | grep -v grep | wc -l)"
+    else
+      # REFER: -C cmdlist: Select by command name.
+      n_instances="$(ps --no-headers -C "${NVIM_OPEN_APPNAME}" | wc -l)"
+    fi
 
     if [ ${n_instances} -eq 1 ]; then
       # E.g., just 1 "neovide" instance.
