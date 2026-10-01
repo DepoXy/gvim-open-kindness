@@ -829,7 +829,7 @@ gvim_bring_window_to_front_macOS() {
   # need to use setFrontmost to find the window by name — which depends on
   # user's (Neo)vim showing the server ID in the window title.
 
-  # DUNNO/2025-02-24: `open -a` does not alway front. (Or at least it
+  # DUNNO/2025-02-24: `open -a` does not always front. (Or at least it
   # was working for months, and now it's not.) So always use Hammerspoon.
   #  if ${is_single_gui_instance} || [ -z "${pattern}" ]; then
   if [ -z "${pattern}" ]; then
