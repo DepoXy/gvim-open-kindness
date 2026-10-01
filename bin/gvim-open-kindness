@@ -665,6 +665,7 @@ gvim_open_files() {
       # Run nvim in the terminal until user quits it.
       eval "${NEOVIM_BIN:-nvim} --listen ${socket_path} ${vimrc_cmd} ${cursor_cmd} ${scratch_cmd} $@"
 
+      # Exit now: Don't bring window to front (already front).
       exit_0
     fi
     # else, Unreachable path
