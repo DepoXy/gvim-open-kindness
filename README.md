@@ -64,6 +64,11 @@ You might also prefer to run a GUI app, such as
 
     export NVIM_OPEN_APPNAME="neovide"
 
+Or better yet, run Neovim within
+[Kitty](https://github.com/kovidgoyal/kitty):
+
+    export NVIM_OPEN_APPNAME="kitty"
+
 ## EXAMPLES
 
 Open this README and position the cursor on line 31, column 39,

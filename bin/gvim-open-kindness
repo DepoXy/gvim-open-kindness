@@ -102,9 +102,12 @@ NVIM_OPEN_SOCKETNAME="${NVIM_OPEN_SOCKETNAME:-NVIM}"
 #   - VimR    — https://github.com/qvacua/vimr
 #   - envim   — https://github.com/tk-shirasaka/envim
 #   - vv      — https://github.com/vv-vim/vv
+# - BETTR: Even better, skip Neovim-specific GUI and (ba)sh, and run
+#   directly within Kitty terminal window:
+#   - Kitty   — https://github.com/kovidgoyal/kitty
 #
 #   NVIM_OPEN_APPNAME="${NVIM_OPEN_APPNAME:-nvim}"
-#   NVIM_OPEN_APPNAME="${NVIM_OPEN_APPNAME:-neovide}"
+#   NVIM_OPEN_APPNAME="${NVIM_OPEN_APPNAME:-kitty}"
 #   etc.
 #
 # - AWARE: Not to be confused with Neovim's NVIM_APPNAME,
@@ -357,7 +360,8 @@ must_locate_executable_or_notify_and_exit() {
   must_verify_command "$(gvim_procname)"
 
   if ! is_editor_gvim; then
-    if [ "${NVIM_OPEN_APPNAME}" != "neovide" ] \
+    if [ "${NVIM_OPEN_APPNAME}" != "kitty" ] \
+      && [ "${NVIM_OPEN_APPNAME}" != "neovide" ] \
       && [ "${NVIM_OPEN_APPNAME}" != "nvim" ] \
       ; then
 
@@ -658,7 +662,9 @@ gvim_open_files() {
 
   if ! ${is_server_running} && ! is_editor_gvim; then
     # Start user's preferred Neovim GUI, e.g., Neovide.
-    if [ "${NVIM_OPEN_APPNAME}" = "neovide" ]; then
+    if [ "${NVIM_OPEN_APPNAME}" = "kitty" ]; then
+      eval "env ITERM_SESSION_ID= kitty ${NEOVIM_BIN:-nvim} --listen ${socket_path} ${vimrc_cmd} ${cursor_cmd} ${scratch_cmd} $@ &"
+    elif [ "${NVIM_OPEN_APPNAME}" = "neovide" ]; then
       # DUNNO: Doesn't work: `NEOVIM_BIN=.../path/to/nvim neovide ...`
       local neovim_bin=""
       if [ -n "${NEOVIM_BIN}" ]; then
