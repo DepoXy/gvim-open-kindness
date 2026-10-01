@@ -106,6 +106,10 @@ NVIM_OPEN_SOCKETNAME="${NVIM_OPEN_SOCKETNAME:-NVIM}"
 #   NVIM_OPEN_APPNAME="${NVIM_OPEN_APPNAME:-nvim}"
 #   NVIM_OPEN_APPNAME="${NVIM_OPEN_APPNAME:-neovide}"
 #   etc.
+#
+# - AWARE: Not to be confused with Neovim's NVIM_APPNAME,
+#   which selects the ~/.local/share/${NVIM_APPNAME:-nvim}
+#   path to use.
 
 NVIM_OPEN_APPNAME="${NVIM_OPEN_APPNAME:-nvim}"
 
