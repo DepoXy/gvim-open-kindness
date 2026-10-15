@@ -34,6 +34,13 @@ toggle_window_focus() {
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
 toggle_window_focus_linux() {
+  local runcmd
+  if ${RAISELOWER_RUN_ENABLE:-false}; then
+    runcmd="$1"
+
+    shift
+  fi
+
   local win_before
 
   # Fetch ID for active window ID before doing anything.
@@ -45,6 +52,13 @@ toggle_window_focus_linux() {
   # Raise window(s) aka bring window(s) to front
   # using name(s) passed as args.
   if ! raise_window "${de_name}" "$@"; then
+    if ${RAISELOWER_RUN_ENABLE:-false}; then
+      # OPSEC: There is none here...
+      if eval "${runcmd}"; then
+
+        return 0
+      fi
+    fi
 
     return 1
   fi
@@ -191,6 +205,9 @@ _humb_probe_desktop_environment() {
 # https://github.com/DepoXy/macOS-Hammyspoony/blob/release/Source/URISetFrontmost.spoon/init.lua
 
 toggle_window_focus_macos() {
+  # FTREQ/2026-10-13: Enable 'run' variant for macOS.
+  ! ${RAISELOWER_RUN_ENABLE:-false} || shift
+
   local pattern="$1"
 
   open -g "hammerspoon://setFrontmost?name=${server_id}" \
@@ -274,7 +291,7 @@ check_deps_darwin() {
 
 main() {
   if [ -z "$1" ]; then
-    >&2 echo "USAGE: $0 {window title}"
+    >&2 echo "USAGE: $0 <APP_ID>|<TITLE_TERM [TITLE_TERM ...]>"
 
     return 1
   fi
@@ -302,8 +319,9 @@ _rolbinrol_shell_sourced() {
 
 if _rolbinrol_shell_sourced; then
   unset -f main
+  unset -f _rolbinrol_shell_sourced
   unset -v _rolbinrol_this_file_name
-  unset -f _rolbinrol_shell_sourc
+  unset -v _rolbinrol_canonical_comm
 else
   main "$@"
 fi
