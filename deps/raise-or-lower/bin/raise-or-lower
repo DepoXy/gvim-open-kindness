@@ -63,7 +63,7 @@ toggle_window_focus_linux() {
     return 1
   fi
 
-  if ${RAISELOWER_RAISE_ONLY:-false}; then
+  if ${RAISELOWER_RAISE_ONLY:-false} || ${RAISELOWER_RAISE_ALL_WINDOWS:-false}; then
 
     return 0
   fi

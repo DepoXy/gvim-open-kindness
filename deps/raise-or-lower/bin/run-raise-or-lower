@@ -1,0 +1,50 @@
+#!/bin/bash
+# vim:tw=0:ts=2:sw=2:et:norl:ft=bash
+# Author: Landon Bouma <https://tallybark.com/>
+# Project: https://github.com/DepoXy/raise-or-lower#📈📉
+# License: MIT. Please find more in the LICENSE file.
+
+# FIXME:/2026-10-13 10:32: Can we not front terminal when testing this script?
+# - You could specify wmclass to ignore? (Vs., e.g., always ignoring Alacritty.)
+
+# FIXME:/2026-10-13 10:33: Should this be or we add 'run-raise-or-lower'?
+
+# Copyright (c) © 2026 Landon Bouma. All Rights Reserved.
+
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+
+# TRYME: E.g., (and sleep so doesn't lower terminal window you're using):
+#
+#   (sleep .5 ; run-raise-or-lower spotify Spotify) &
+
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+
+main() {
+  if [ -z "$1" ] && [ -z "$2" ]; then
+    >&2 echo "USAGE: $0 <COMMAND> <APP_ID>|<TITLE_TERM [TITLE_TERM ...]>"
+
+    return 1
+  fi
+
+  # Eh, a little kludgy-feeling, but tells RoL to expect additional first arg.
+  # CXREF: raise-or-lower/bin/raise-or-lower
+  RAISELOWER_RUN_ENABLE=true \
+    "$(dirname -- "$(realpath -- "$0")")/raise-or-lower" "$@"
+}
+
+# ***
+
+_rolbinrrol_this_file_name="run-raise-or-lower"
+_rolbinrrol_canonical_comm="$(basename -- "$(realpath -- "$0")")"
+_rolbinrrol_shell_sourced() {
+  [ "${_rolbinrrol_canonical_comm}" != "${_rolbinrrol_this_file_name}" ]
+}
+
+if _rolbinrrol_shell_sourced; then
+  unset -f main
+  unset -f _rolbinrrol_shell_sourced
+  unset -v _rolbinrrol_this_file_name
+  unset -v _rolbinrrol_canonical_comm
+else
+  main "$@"
+fi
